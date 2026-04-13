@@ -7,6 +7,8 @@ from pathlib import Path
 from datetime import datetime
 from io import BytesIO
 import json
+import platform
+import subprocess
 import unicodedata
 import uuid
 
@@ -26,6 +28,29 @@ if not HISTORICO_FILE.exists():
 
 
 # ── helpers ───────────────────────────────────────────────
+
+def _converter_pdf(caminho_docx: str, caminho_pdf: str):
+    """Converte .docx para PDF: Word no Windows, LibreOffice no Linux."""
+    if platform.system() == "Windows":
+        import pythoncom
+        from docx2pdf import convert
+        pythoncom.CoInitialize()
+        try:
+            convert(caminho_docx, caminho_pdf)
+        finally:
+            pythoncom.CoUninitialize()
+    else:
+        output_dir = str(Path(caminho_pdf).parent)
+        subprocess.run(
+            ["libreoffice", "--headless", "--convert-to", "pdf",
+             "--outdir", output_dir, caminho_docx],
+            check=True, capture_output=True,
+        )
+        # LibreOffice nomeia o PDF pelo stem do docx
+        gerado = Path(output_dir) / (Path(caminho_docx).stem + ".pdf")
+        if gerado != Path(caminho_pdf):
+            gerado.rename(caminho_pdf)
+
 
 def _slugify(nome: str) -> str:
     """Minúsculas, sem acentos, espaços → underscore, sem caracteres especiais."""
@@ -258,13 +283,7 @@ def gerar_contrato_route():
         nome_pdf    = nome_saida.replace(".docx", ".pdf")
         caminho_pdf = str(CONTRATOS_FOLDER / nome_pdf)
         try:
-            import pythoncom
-            from docx2pdf import convert
-            pythoncom.CoInitialize()
-            try:
-                convert(caminho_saida, caminho_pdf)
-            finally:
-                pythoncom.CoUninitialize()
+            _converter_pdf(caminho_saida, caminho_pdf)
             pdf_bytes = BytesIO(Path(caminho_pdf).read_bytes())
             return send_file(
                 pdf_bytes,
@@ -323,13 +342,7 @@ def download_contrato_pdf(filename):
     nome_pdf    = Path(filename).stem + ".pdf"
     caminho_pdf = CONTRATOS_FOLDER / nome_pdf
     try:
-        import pythoncom
-        from docx2pdf import convert
-        pythoncom.CoInitialize()
-        try:
-            convert(str(caminho_docx), str(caminho_pdf))
-        finally:
-            pythoncom.CoUninitialize()
+        _converter_pdf(str(caminho_docx), str(caminho_pdf))
         pdf_bytes = BytesIO(Path(caminho_pdf).read_bytes())
         return send_file(
             pdf_bytes,
