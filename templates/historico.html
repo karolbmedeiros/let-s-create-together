@@ -155,6 +155,12 @@
 let _downloadFilename = null;
 
 function abrirModalDownload(filename) {
+  // Arquivos .xlsx (vistoria): download direto sem modal de formato
+  if (filename.toLowerCase().endsWith('.xlsx')) {
+    window.location.href = `/historico/download/${encodeURIComponent(filename)}`;
+    return;
+  }
+
   _downloadFilename = filename;
   document.getElementById('modal-dl-formatos').style.display = 'grid';
   document.getElementById('modal-dl-erro').style.display    = 'none';

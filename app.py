@@ -13,7 +13,7 @@ import subprocess
 import unicodedata
 import uuid
 
-from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_avalista, gerar_notificacao_inadimplente, nome_arquivo_saida
+from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_avalista, gerar_notificacao_inadimplente, gerar_vistoria, nome_arquivo_saida
 
 app = Flask(__name__)
 app.secret_key = "ativuz-secret-2026"
@@ -66,9 +66,11 @@ def _slugify(texto: str) -> str:
 
 
 def detectar_tipo(filename: str):
-    """Retorna 'locacao', 'quitacao', 'notificacao' ou None com base no nome do arquivo."""
+    """Retorna o tipo do template com base no nome do arquivo."""
     norm = unicodedata.normalize('NFD', filename.lower())
     norm = ''.join(c for c in norm if unicodedata.category(c) != 'Mn')
+    if any(k in norm for k in ('vistoria', 'vistorias', 'entrega', 'ordem')):
+        return 'vistoria'
     if 'quitacao' in norm:
         return 'quitacao'
     if 'locacao' in norm:
@@ -82,7 +84,11 @@ def detectar_tipo(filename: str):
 
 def get_templates():
     result = []
-    for f in sorted(UPLOAD_FOLDER.glob("*.docx")):
+    files = sorted(
+        list(UPLOAD_FOLDER.glob("*.docx")) + list(UPLOAD_FOLDER.glob("*.xlsx")),
+        key=lambda f: f.name,
+    )
+    for f in files:
         meta_path = UPLOAD_FOLDER / f"{f.stem}.json"
         display_name = f.stem
         if meta_path.exists():
@@ -190,8 +196,8 @@ def upload_template():
         flash("Selecione um arquivo .docx.", "erro")
         return redirect(url_for("pagina_templates"))
 
-    if not arquivo.filename.lower().endswith(".docx"):
-        flash("Apenas arquivos .docx são aceitos.", "erro")
+    if not arquivo.filename.lower().endswith((".docx", ".xlsx")):
+        flash("Apenas arquivos .docx ou .xlsx são aceitos.", "erro")
         return redirect(url_for("pagina_templates"))
 
     uid = uuid.uuid4().hex[:8]
@@ -241,8 +247,42 @@ def gerar_contrato_route():
     tipo = detectar_tipo(template_filename)
     if tipo is None:
         return jsonify({
-            "error": "Template não reconhecido. Renomeie o arquivo com 'locacao', 'quitacao', 'notificacao' ou 'inadimplente' no nome."
+            "error": "Template não reconhecido. Renomeie o arquivo com 'locacao', 'quitacao', 'notificacao', 'inadimplente' ou 'vistoria'/'entrega'/'ordem' no nome."
         }), 400
+
+    # ── VISTORIA (.xlsx) — retorno direto ────────────────────────────────────
+    if tipo == "vistoria":
+        placa = _slugify(request.form.get("vis_placa", "PLACA"))
+        data_slug = datetime.now().strftime("%d.%m.%Y")
+        nome_saida = f"VISTORIA_{placa}_{data_slug}.xlsx"
+        caminho_saida = str(CONTRATOS_FOLDER / nome_saida)
+
+        try:
+            gerar_vistoria(request.form, caminho_saida, str(template_path))
+        except Exception as e:
+            return jsonify({"error": f"Erro ao gerar vistoria: {e}"}), 500
+
+        meta_path = UPLOAD_FOLDER / f"{template_path.stem}.json"
+        nome_template = "VISTORIA"
+        if meta_path.exists():
+            nome_template = json.loads(meta_path.read_text(encoding="utf-8")).get("nome", "VISTORIA")
+
+        historico = get_historico()
+        historico.append({
+            "id": uuid.uuid4().hex,
+            "locatario_nome": request.form.get("vis_cliente", ""),
+            "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "template": nome_template,
+            "arquivo": nome_saida,
+        })
+        save_historico(historico)
+
+        return send_file(
+            caminho_saida,
+            as_attachment=True,
+            download_name=nome_saida,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
     formato = request.form.get("formato", "docx")
 
@@ -328,6 +368,8 @@ def preview_contrato():
     tipo = detectar_tipo(template_filename)
     if tipo is None:
         return jsonify({"error": "Template não reconhecido."}), 400
+    if tipo == "vistoria":
+        return jsonify({"error": "Pré-visualização não disponível para vistoria (formato .xlsx)."}), 400
 
     temp_id = uuid.uuid4().hex
     caminho_temp = str(TEMP_FOLDER / f"{temp_id}.docx")
@@ -374,11 +416,17 @@ def download_contrato(filename):
     if not caminho.exists():
         flash("Arquivo não encontrado.", "erro")
         return redirect(url_for("pagina_historico"))
+    ext = Path(filename).suffix.lower()
+    mime = (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        if ext == ".xlsx"
+        else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
     return send_file(
         str(caminho),
         as_attachment=True,
         download_name=Path(filename).name,
-        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        mimetype=mime,
     )
 
 

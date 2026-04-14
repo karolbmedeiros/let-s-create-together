@@ -335,6 +335,135 @@ def gerar_notificacao_avalista(
                     z.write(arquivo, arquivo.relative_to(tmp))
 
 
+def gerar_vistoria(dados, caminho_saida: str, template_path: str) -> None:
+    """Preenche o template .xlsx de vistoria preservando a formatação original."""
+    import openpyxl
+    import unicodedata as _uni
+
+    def _norm(s: str) -> str:
+        s = _uni.normalize("NFD", str(s).lower())
+        return "".join(c for c in s if _uni.category(c) != "Mn")
+
+    template = Path(template_path)
+    if not template.exists():
+        raise FileNotFoundError(f"Template não encontrado: {template}")
+
+    wb = openpyxl.load_workbook(str(template))
+    agora = datetime.now()
+
+    # Campos de texto — ordenados do mais específico ao mais genérico
+    campos_texto = [
+        ("preenchido por",          dados.get("vis_preenchido_por", "")),
+        ("hodometro entrega",       dados.get("vis_hodometro_entrega", "")),
+        ("hodometro retorno",       dados.get("vis_hodometro_retorno", "")),
+        ("luzes do painel",         dados.get("vis_luzes_painel", "")),
+        ("danos ou avarias",        dados.get("vis_danos_internos", "")),
+        ("observacoes gerais",      dados.get("vis_observacoes_gerais", "")),
+        ("descricao dos sintomas",  dados.get("vis_descricao_sintomas", "")),
+        ("cliente",                 dados.get("vis_cliente", "")),
+        ("telefone",                dados.get("vis_telefone", "")),
+        ("endereco",                dados.get("vis_endereco", "")),
+        ("combustivel",             dados.get("vis_combustivel", "")),
+        ("veiculo",                 dados.get("vis_veiculo", "")),
+        ("chassi",                  dados.get("vis_chassi", "")),
+        ("motor",                   dados.get("vis_motor", "")),
+        ("placa",                   dados.get("vis_placa", "")),
+        ("cor",                     dados.get("vis_cor", "")),
+        ("ano",                     dados.get("vis_ano", "")),
+        ("data",                    agora.strftime("%d/%m/%Y %H:%M")),
+    ]
+
+    # Acessórios — (label_norm, valor S/N/A)
+    acessorios = [
+        ("calotas",         dados.get("acc_calotas", "")),
+        ("buzina",          dados.get("acc_buzina", "")),
+        ("doc. crlv",       dados.get("acc_doc_crlv", "")),
+        ("triangulo",       dados.get("acc_triangulo", "")),
+        ("antena",          dados.get("acc_antena", "")),
+        ("sensor de re",    dados.get("acc_sensor_re", "")),
+        ("som",             dados.get("acc_som", "")),
+        ("tapetes",         dados.get("acc_tapetes", "")),
+        ("limpadores",      dados.get("acc_limpadores", "")),
+        ("chave de roda",   dados.get("acc_chave_roda", "")),
+        ("vidros",          dados.get("acc_vidros", "")),
+        ("oleo do motor",   dados.get("acc_oleo_motor", "")),
+        ("alarme",          dados.get("acc_alarme", "")),
+        ("lampadas",        dados.get("acc_lampadas", "")),
+        ("macaco",          dados.get("acc_macaco", "")),
+        ("estepe",          dados.get("acc_estepe", "")),
+        ("gnv",             dados.get("acc_gnv", "")),
+        ("agua",            dados.get("acc_agua", "")),
+        ("borracha psg d",  dados.get("acc_borracha_psg_d", "")),
+        ("borracha mtr d",  dados.get("acc_borracha_mtr_d", "")),
+        ("asa urubu dd",    dados.get("acc_asa_urubu_dd", "")),
+        ("asa urubu td",    dados.get("acc_asa_urubu_td", "")),
+        ("tapete de mala",  dados.get("acc_tapete_mala", "")),
+        ("tampa paraxq",    dados.get("acc_tampa_paraxq", "")),
+        ("borracha psg t",  dados.get("acc_borracha_psg_t", "")),
+        ("borracha mtr t",  dados.get("acc_borracha_mtr_t", "")),
+        ("asa urubu de",    dados.get("acc_asa_urubu_de", "")),
+        ("asa urubu te",    dados.get("acc_asa_urubu_te", "")),
+        ("bagagito",        dados.get("acc_bagagito", "")),
+        ("lingueta",        dados.get("acc_lingueta", "")),
+    ]
+
+    # ── Preencher campos de texto: busca label → escreve célula à direita ────
+    filled_labels: set = set()
+    for ws in wb.worksheets:
+        for row in ws.iter_rows():
+            for cell in row:
+                if cell.value is None:
+                    continue
+                cell_norm = _norm(str(cell.value))
+                for label, valor in campos_texto:
+                    if label in cell_norm and label not in filled_labels and valor:
+                        target = ws.cell(row=cell.row, column=cell.column + 1)
+                        if not target.value or str(target.value).strip() == "":
+                            target.value = valor
+                            filled_labels.add(label)
+                            break
+
+    # ── Preencher acessórios: localiza colunas S/N/A e marca itens ──────────
+    for ws in wb.worksheets:
+        s_col = n_col = a_col = header_row = None
+        for row in ws.iter_rows():
+            for cell in row:
+                if str(cell.value or "").strip().upper() == "S":
+                    nc = ws.cell(row=cell.row, column=cell.column + 1)
+                    ac = ws.cell(row=cell.row, column=cell.column + 2)
+                    if (str(nc.value or "").strip().upper() == "N"
+                            and str(ac.value or "").strip().upper() == "A"):
+                        header_row = cell.row
+                        s_col = cell.column
+                        n_col = cell.column + 1
+                        a_col = cell.column + 2
+                        break
+            if header_row:
+                break
+
+        if not header_row:
+            continue
+
+        col_map = {"S": s_col, "N": n_col, "A": a_col}
+
+        for item_label, valor in acessorios:
+            if not valor or valor.upper() not in col_map:
+                continue
+            for row in ws.iter_rows(min_row=header_row + 1):
+                found = False
+                for cell in row:
+                    if cell.value and item_label in _norm(str(cell.value)):
+                        ws.cell(row=cell.row, column=col_map[valor.upper()], value="X")
+                        found = True
+                        break
+                if found:
+                    break
+
+    saida = Path(caminho_saida)
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    wb.save(str(saida))
+
+
 def gerar_notificacao_inadimplente(
     locatario_nome: str,
     data_contrato: str,
