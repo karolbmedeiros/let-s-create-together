@@ -530,3 +530,199 @@ def gerar_notificacao_inadimplente(
             for arquivo in tmp.rglob("*"):
                 if arquivo.is_file():
                     z.write(arquivo, arquivo.relative_to(tmp))
+
+def gerar_vistoria_entrega(dados, fotos: list, caminho_saida: str, template_path: str) -> None:
+    """Preenche o template .docx de Vistoria de Entrega usando python-docx.
+
+    Campos de texto: busca label em celula de tabela e preenche a celula adjacente vazia.
+    Checklist: localiza linha pelo nome do item e substitui [ ] da opcao selecionada por [X].
+               Tenta dois padroes: '[ ] S'/'[ ] N'/'[ ] A' ou posicao ordinal (1=S, 2=N, 3=A).
+    Fotos: inseridas ao final do documento.
+    """
+    import unicodedata as _uni
+    from docx import Document
+    from docx.shared import Inches
+
+    def _norm(s: str) -> str:
+        s = _uni.normalize("NFD", str(s).lower())
+        return "".join(c for c in s if _uni.category(c) != "Mn")
+
+    def _para_text(para) -> str:
+        return "".join(r.text for r in para.runs)
+
+    def _set_para_text(para, new_text: str) -> None:
+        if para.runs:
+            para.runs[0].text = new_text
+            for r in para.runs[1:]:
+                r.text = ""
+        else:
+            para.add_run(new_text)
+
+    template = Path(template_path)
+    if not template.exists():
+        raise FileNotFoundError(f"Template nao encontrado: {template}")
+
+    doc = Document(str(template))
+
+    # ── Campos de texto: label em celula -> valor na celula adjacente ─────────
+    campos = [
+        ("cliente",           dados.get("cliente", "")),
+        ("tel",               dados.get("tel", "")),
+        ("preenchido por",    dados.get("preenchido_por", "")),
+        ("endereco",          dados.get("endereco", "")),
+        ("chassi",            dados.get("chassi", "")),
+        ("motor",             dados.get("motor", "")),
+        ("veiculo",           dados.get("veiculo", "")),
+        ("placa",             dados.get("placa", "")),
+        ("ano",               dados.get("ano", "")),
+        ("cor",               dados.get("cor", "")),
+        ("hodometro entrega", dados.get("hodometro_entrega", "")),
+        ("hodometro retorno", dados.get("hodometro_retorno", "")),
+        ("data",              dados.get("data", "")),
+        ("danos",             dados.get("danos", "")),
+        ("observacoes",       dados.get("observacoes", "")),
+        ("sintomas",          dados.get("sintomas", "")),
+        ("responsavel",       dados.get("assinatura_responsavel", "")),
+    ]
+
+    filled: set = set()
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            cells = row.cells
+            for i, cell in enumerate(cells):
+                cn = _norm(cell.text)
+                for label, valor in campos:
+                    key = f"{label}_{i}_{id(row)}"
+                    if key not in filled and label in cn and valor:
+                        if i + 1 < len(cells):
+                            nxt = cells[i + 1]
+                            if not nxt.text.strip():
+                                nxt.paragraphs[0].clear()
+                                nxt.paragraphs[0].add_run(valor)
+                                filled.add(key)
+                                break
+
+    # ── Combustivel (paragrafo com [ ] MT / [ ] 6/8 / [ ] TC) ───────────────
+    combustivel = dados.get("combustivel", "").upper()
+    if combustivel:
+        def _all_paras():
+            yield from doc.paragraphs
+            for tbl in doc.tables:
+                for row in tbl.rows:
+                    for cell in row.cells:
+                        yield from cell.paragraphs
+
+        for para in _all_paras():
+            txt = _para_text(para)
+            if any(op in txt for op in ["MT", "6/8", "TC"]) and "[ ]" in txt:
+                nova = txt
+                for op in ["MT", "6/8", "TC"]:
+                    if op == combustivel:
+                        nova = nova.replace(f"[ ] {op}", f"[X] {op}", 1)
+                        nova = nova.replace(f"[ ]{op}", f"[X]{op}", 1)
+                if nova != txt:
+                    _set_para_text(para, nova)
+
+    # ── Checklist de acessorios (mais especificos primeiro) ───────────────────
+    acessorios = [
+        ("borracha psg d",  dados.get("acc_borracha_psg_d", "")),
+        ("borracha psg t",  dados.get("acc_borracha_psg_t", "")),
+        ("borr. mtr t",     dados.get("acc_borr_mtr_t", "")),
+        ("borr. mtr",       dados.get("acc_borr_mtr", "")),
+        ("asa urubu dd",    dados.get("acc_asa_urubu_dd", "")),
+        ("asa urubu de",    dados.get("acc_asa_urubu_de", "")),
+        ("asa urub td",     dados.get("acc_asa_urub_td", "")),
+        ("asa urub te",     dados.get("acc_asa_urub_te", "")),
+        ("tapete/mala",     dados.get("acc_tapete_mala", "")),
+        ("tapetes",         dados.get("acc_tapetes", "")),
+        ("tampa prx",       dados.get("acc_tampa_prx", "")),
+        ("oleo motor",      dados.get("acc_oleo_motor", "")),
+        ("chave roda",      dados.get("acc_chave_roda", "")),
+        ("sensor re",       dados.get("acc_sensor_re", "")),
+        ("doc. crlv",       dados.get("acc_doc_crlv", "")),
+        ("limpadores",      dados.get("acc_limpadores", "")),
+        ("triangulo",       dados.get("acc_triangulo", "")),
+        ("vidros",          dados.get("acc_vidros", "")),
+        ("alarme",          dados.get("acc_alarme", "")),
+        ("lampadas",        dados.get("acc_lampadas", "")),
+        ("macaco",          dados.get("acc_macaco", "")),
+        ("bagagito",        dados.get("acc_bagagito", "")),
+        ("linguet",         dados.get("acc_linguet", "")),
+        ("calotas",         dados.get("acc_calotas", "")),
+        ("buzina",          dados.get("acc_buzina", "")),
+        ("antena",          dados.get("acc_antena", "")),
+        ("estepe",          dados.get("acc_estepe", "")),
+        ("gnv",             dados.get("acc_gnv", "")),
+        ("agua",            dados.get("acc_agua", "")),
+        ("som",             dados.get("acc_som", "")),
+    ]
+
+    processed: set = set()
+
+    for item_label, valor in acessorios:
+        if not valor or valor.upper() not in ("S", "N", "A"):
+            continue
+        val = valor.upper()
+        ordem = {"S": 0, "N": 1, "A": 2}[val]
+
+        for t_idx, tbl in enumerate(doc.tables):
+            found = False
+            for r_idx, row in enumerate(tbl.rows):
+                if (t_idx, r_idx) in processed:
+                    continue
+                row_text = _norm(" ".join(c.text for c in row.cells))
+                if item_label not in row_text:
+                    continue
+
+                for cell in row.cells:
+                    for para in cell.paragraphs:
+                        txt = _para_text(para)
+                        if "[ ]" not in txt:
+                            continue
+                        nova = txt
+                        # Padrao 1: "[ ] S" / "[ ] N" / "[ ] A"
+                        for op in ["S", "N", "A"]:
+                            if op == val:
+                                nova = nova.replace(f"[ ] {op}", f"[X] {op}", 1)
+                                nova = nova.replace(f"[ ]{op}", f"[X]{op}", 1)
+                        # Padrao 2: posicao ordinal (1=S, 2=N, 3=A)
+                        if nova == txt:
+                            resultado = []
+                            count = 0
+                            j = 0
+                            while j < len(nova):
+                                if nova[j:j+3] == "[ ]":
+                                    resultado.append("[X]" if count == ordem else "[ ]")
+                                    count += 1
+                                    j += 3
+                                else:
+                                    resultado.append(nova[j])
+                                    j += 1
+                            nova = "".join(resultado)
+                        if nova != txt:
+                            _set_para_text(para, nova)
+
+                processed.add((t_idx, r_idx))
+                found = True
+                break
+            if found:
+                break
+
+    # ── Fotos ao final do documento ───────────────────────────────────────────
+    if fotos:
+        doc.add_page_break()
+        h = doc.add_paragraph("Fotos")
+        try:
+            h.style = doc.styles["Heading 2"]
+        except KeyError:
+            pass
+        for foto_path in fotos:
+            try:
+                doc.add_picture(str(foto_path), width=Inches(5.5))
+                doc.add_paragraph()
+            except Exception:
+                pass
+
+    saida = Path(caminho_saida)
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(str(saida))

@@ -13,7 +13,7 @@ import subprocess
 import unicodedata
 import uuid
 
-from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_avalista, gerar_notificacao_inadimplente, gerar_vistoria, nome_arquivo_saida
+from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_avalista, gerar_notificacao_inadimplente, gerar_vistoria_entrega, nome_arquivo_saida
 
 app = Flask(__name__)
 app.secret_key = "ativuz-secret-2026"
@@ -22,10 +22,12 @@ UPLOAD_FOLDER = Path("uploads")
 CONTRATOS_FOLDER = Path("contratos")
 TEMP_FOLDER = Path("temp_preview")
 HISTORICO_FILE = Path("historico.json")
+DOCX_TEMPLATES = Path("docx_templates")
 
 UPLOAD_FOLDER.mkdir(exist_ok=True)
 CONTRATOS_FOLDER.mkdir(exist_ok=True)
 TEMP_FOLDER.mkdir(exist_ok=True)
+DOCX_TEMPLATES.mkdir(exist_ok=True)
 if not HISTORICO_FILE.exists():
     HISTORICO_FILE.write_text("[]", encoding="utf-8")
 
@@ -69,8 +71,6 @@ def detectar_tipo(filename: str):
     """Retorna o tipo do template com base no nome do arquivo."""
     norm = unicodedata.normalize('NFD', filename.lower())
     norm = ''.join(c for c in norm if unicodedata.category(c) != 'Mn')
-    if any(k in norm for k in ('vistoria', 'vistorias', 'entrega', 'ordem')):
-        return 'vistoria'
     if 'quitacao' in norm:
         return 'quitacao'
     if 'locacao' in norm:
@@ -247,42 +247,8 @@ def gerar_contrato_route():
     tipo = detectar_tipo(template_filename)
     if tipo is None:
         return jsonify({
-            "error": "Template não reconhecido. Renomeie o arquivo com 'locacao', 'quitacao', 'notificacao', 'inadimplente' ou 'vistoria'/'entrega'/'ordem' no nome."
+            "error": "Template não reconhecido. Renomeie o arquivo com 'locacao', 'quitacao', 'notificacao' ou 'inadimplente' no nome."
         }), 400
-
-    # ── VISTORIA (.xlsx) — retorno direto ────────────────────────────────────
-    if tipo == "vistoria":
-        placa = _slugify(request.form.get("vis_placa", "PLACA"))
-        data_slug = datetime.now().strftime("%d.%m.%Y")
-        nome_saida = f"VISTORIA_{placa}_{data_slug}.xlsx"
-        caminho_saida = str(CONTRATOS_FOLDER / nome_saida)
-
-        try:
-            gerar_vistoria(request.form, caminho_saida, str(template_path))
-        except Exception as e:
-            return jsonify({"error": f"Erro ao gerar vistoria: {e}"}), 500
-
-        meta_path = UPLOAD_FOLDER / f"{template_path.stem}.json"
-        nome_template = "VISTORIA"
-        if meta_path.exists():
-            nome_template = json.loads(meta_path.read_text(encoding="utf-8")).get("nome", "VISTORIA")
-
-        historico = get_historico()
-        historico.append({
-            "id": uuid.uuid4().hex,
-            "locatario_nome": request.form.get("vis_cliente", ""),
-            "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-            "template": nome_template,
-            "arquivo": nome_saida,
-        })
-        save_historico(historico)
-
-        return send_file(
-            caminho_saida,
-            as_attachment=True,
-            download_name=nome_saida,
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        )
 
     formato = request.form.get("formato", "docx")
 
@@ -507,6 +473,131 @@ def exportar_historico_excel():
         as_attachment=True,
         download_name=nome_arquivo,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+# ── Vistoria de Entrega ───────────────────────────────────────────────────────
+
+VISTORIA_TEMPLATE = DOCX_TEMPLATES / "Vistoria_de_Entrega_TEMPLATE 1.docx"
+
+
+@app.route("/vistoria", methods=["GET"])
+def pagina_vistoria():
+    template_ok = VISTORIA_TEMPLATE.exists()
+    return render_template("vistoria.html", active="vistoria", template_ok=template_ok)
+
+
+@app.route("/vistoria", methods=["POST"])
+def processar_vistoria():
+    if not VISTORIA_TEMPLATE.exists():
+        flash("Template de vistoria não encontrado em docx_templates/.", "erro")
+        return redirect(url_for("pagina_vistoria"))
+
+    dados = {
+        "cliente":                  request.form.get("cliente", ""),
+        "tel":                      request.form.get("tel", ""),
+        "preenchido_por":           request.form.get("preenchido_por", ""),
+        "endereco":                 request.form.get("endereco", ""),
+        "chassi":                   request.form.get("chassi", ""),
+        "motor":                    request.form.get("motor", ""),
+        "veiculo":                  request.form.get("veiculo", ""),
+        "placa":                    request.form.get("placa", ""),
+        "ano":                      request.form.get("ano", ""),
+        "cor":                      request.form.get("cor", ""),
+        "hodometro_entrega":        request.form.get("hodometro_entrega", ""),
+        "hodometro_retorno":        request.form.get("hodometro_retorno", ""),
+        "combustivel":              request.form.get("combustivel", ""),
+        "data":                     datetime.now().strftime("%d/%m/%Y"),
+        "danos":                    request.form.get("danos", ""),
+        "observacoes":              request.form.get("observacoes", ""),
+        "sintomas":                 request.form.get("sintomas", ""),
+        "assinatura_cliente":       request.form.get("assinatura_cliente", ""),
+        "assinatura_responsavel":   request.form.get("assinatura_responsavel", ""),
+        # Acessórios (form fields sem prefixo, mapeados para chaves que gerar_contrato usa)
+        "acc_calotas":          request.form.get("calotas", ""),
+        "acc_buzina":           request.form.get("buzina", ""),
+        "acc_doc_crlv":         request.form.get("doc_crlv", ""),
+        "acc_triangulo":        request.form.get("triangulo", ""),
+        "acc_antena":           request.form.get("antena", ""),
+        "acc_sensor_re":        request.form.get("sensor_re", ""),
+        "acc_som":              request.form.get("som", ""),
+        "acc_tapetes":          request.form.get("tapetes", ""),
+        "acc_limpadores":       request.form.get("limpadores", ""),
+        "acc_chave_roda":       request.form.get("chave_roda", ""),
+        "acc_vidros":           request.form.get("vidros", ""),
+        "acc_oleo_motor":       request.form.get("oleo_motor", ""),
+        "acc_alarme":           request.form.get("alarme", ""),
+        "acc_lampadas":         request.form.get("lampadas", ""),
+        "acc_macaco":           request.form.get("macaco", ""),
+        "acc_estepe":           request.form.get("estepe", ""),
+        "acc_gnv":              request.form.get("gnv", ""),
+        "acc_agua":             request.form.get("agua", ""),
+        "acc_borracha_psg_d":   request.form.get("borracha_psg_d", ""),
+        "acc_borr_mtr":         request.form.get("borracha_mtr_d", ""),
+        "acc_asa_urubu_dd":     request.form.get("asa_urubu_dd", ""),
+        "acc_asa_urub_td":      request.form.get("asa_urubu_td", ""),
+        "acc_tapete_mala":      request.form.get("tapete_mala", ""),
+        "acc_tampa_prx":        request.form.get("tampa_paraxq", ""),
+        "acc_borracha_psg_t":   request.form.get("borracha_psg_t", ""),
+        "acc_borr_mtr_t":       request.form.get("borracha_mtr_t", ""),
+        "acc_asa_urubu_de":     request.form.get("asa_urubu_de", ""),
+        "acc_asa_urub_te":      request.form.get("asa_urubu_te", ""),
+        "acc_bagagito":         request.form.get("bagagito", ""),
+        "acc_linguet":          request.form.get("lingueta", ""),
+    }
+
+    # ── Salvar fotos temporariamente ──────────────────────────────────────────
+    fotos_paths = []
+    for foto in request.files.getlist("fotos"):
+        if foto and foto.filename:
+            safe = secure_filename(foto.filename)
+            ext = Path(safe).suffix.lower()
+            if ext in (".jpg", ".jpeg", ".png"):
+                p = TEMP_FOLDER / f"{uuid.uuid4().hex}{ext}"
+                foto.save(str(p))
+                fotos_paths.append(p)
+
+    # ── Gerar arquivo ─────────────────────────────────────────────────────────
+    placa = _slugify(dados.get("placa", "PLACA"))
+    data_slug = datetime.now().strftime("%d.%m.%Y")
+    nome_docx = f"VISTORIA_{placa}_{data_slug}.docx"
+    nome_pdf  = f"VISTORIA_{placa}_{data_slug}.pdf"
+    caminho_docx = str(CONTRATOS_FOLDER / nome_docx)
+    caminho_pdf  = str(CONTRATOS_FOLDER / nome_pdf)
+
+    try:
+        gerar_vistoria_entrega(dados, fotos_paths, caminho_docx, str(VISTORIA_TEMPLATE))
+    except Exception as e:
+        for p in fotos_paths:
+            p.unlink(missing_ok=True)
+        flash(f"Erro ao gerar vistoria: {e}", "erro")
+        return redirect(url_for("pagina_vistoria"))
+
+    for p in fotos_paths:
+        p.unlink(missing_ok=True)
+
+    try:
+        _converter_pdf(caminho_docx, caminho_pdf)
+    except Exception as e:
+        flash(f"Erro ao converter para PDF: {e}", "erro")
+        return redirect(url_for("pagina_vistoria"))
+
+    # ── Histórico ─────────────────────────────────────────────────────────────
+    historico = get_historico()
+    historico.append({
+        "id": uuid.uuid4().hex,
+        "locatario_nome": dados.get("cliente", ""),
+        "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "template": "VISTORIA",
+        "arquivo": nome_pdf,
+    })
+    save_historico(historico)
+
+    return send_file(
+        caminho_pdf,
+        as_attachment=True,
+        download_name=nome_pdf,
+        mimetype="application/pdf",
     )
 
 
