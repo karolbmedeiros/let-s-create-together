@@ -387,14 +387,16 @@ async function gerarVistoria(formato) {
     });
 
     const ct = resp.headers.get('content-type') || '';
+
+    // Erro JSON
     if (ct.includes('application/json')) {
       const data = await resp.json();
       alert(data.error || 'Erro ao gerar vistoria.');
       return;
     }
 
-    if (!resp.ok) {
-      // redirect (flash) — follow it
+    // Redirect (erro no servidor) — o fetch segue o redirect e retorna HTML
+    if (!resp.ok || resp.redirected || ct.includes('text/html')) {
       window.location.href = resp.url;
       return;
     }
