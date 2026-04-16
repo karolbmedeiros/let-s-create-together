@@ -478,7 +478,7 @@ def exportar_historico_excel():
 
 # ── Vistoria de Entrega ───────────────────────────────────────────────────────
 
-VISTORIA_TEMPLATE = DOCX_TEMPLATES / "Vistoria_de_Entrega_TEMPLATE 1.docx"
+VISTORIA_TEMPLATE = DOCX_TEMPLATES / "VISTORIA_TESTE_1.docx"
 
 
 @app.route("/vistoria", methods=["GET"])
@@ -557,6 +557,8 @@ def processar_vistoria():
                 foto.save(str(p))
                 fotos_paths.append(p)
 
+    formato = request.form.get("formato", "pdf").lower()
+
     # ── Gerar arquivo ─────────────────────────────────────────────────────────
     placa = _slugify(dados.get("placa", "PLACA"))
     data_slug = datetime.now().strftime("%d.%m.%Y")
@@ -576,13 +578,30 @@ def processar_vistoria():
     for p in fotos_paths:
         p.unlink(missing_ok=True)
 
+    # ── Histórico ─────────────────────────────────────────────────────────────
+    if formato == "docx":
+        historico = get_historico()
+        historico.append({
+            "id": uuid.uuid4().hex,
+            "locatario_nome": dados.get("cliente", ""),
+            "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "template": "VISTORIA",
+            "arquivo": nome_docx,
+        })
+        save_historico(historico)
+        return send_file(
+            caminho_docx,
+            as_attachment=True,
+            download_name=nome_docx,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        )
+
     try:
         _converter_pdf(caminho_docx, caminho_pdf)
     except Exception as e:
         flash(f"Erro ao converter para PDF: {e}", "erro")
         return redirect(url_for("pagina_vistoria"))
 
-    # ── Histórico ─────────────────────────────────────────────────────────────
     historico = get_historico()
     historico.append({
         "id": uuid.uuid4().hex,

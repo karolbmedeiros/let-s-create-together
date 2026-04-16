@@ -386,6 +386,16 @@ body {
   box-shadow: 0 2px 6px rgba(37,99,235,.35);
 }
 
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg);
+}
+
 .btn-danger {
   background: var(--danger-light);
   color: var(--danger);

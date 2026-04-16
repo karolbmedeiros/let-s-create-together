@@ -532,181 +532,166 @@ def gerar_notificacao_inadimplente(
                     z.write(arquivo, arquivo.relative_to(tmp))
 
 def gerar_vistoria_entrega(dados, fotos: list, caminho_saida: str, template_path: str) -> None:
-    """Preenche o template .docx de Vistoria de Entrega usando python-docx.
-
-    Campos de texto: busca label em celula de tabela e preenche a celula adjacente vazia.
-    Checklist: localiza linha pelo nome do item e substitui [ ] da opcao selecionada por [X].
-               Tenta dois padroes: '[ ] S'/'[ ] N'/'[ ] A' ou posicao ordinal (1=S, 2=N, 3=A).
-    Fotos: inseridas ao final do documento.
-    """
-    import unicodedata as _uni
+    """Preenche o template .docx de Vistoria de Entrega com base na estrutura real do arquivo."""
+    import re
     from docx import Document
     from docx.shared import Inches
+    from pathlib import Path as _Path
 
-    def _norm(s: str) -> str:
-        s = _uni.normalize("NFD", str(s).lower())
-        return "".join(c for c in s if _uni.category(c) != "Mn")
-
-    def _para_text(para) -> str:
-        return "".join(r.text for r in para.runs)
-
-    def _set_para_text(para, new_text: str) -> None:
-        if para.runs:
-            para.runs[0].text = new_text
-            for r in para.runs[1:]:
-                r.text = ""
-        else:
-            para.add_run(new_text)
-
-    template = Path(template_path)
+    template = _Path(template_path)
     if not template.exists():
         raise FileNotFoundError(f"Template nao encontrado: {template}")
 
     doc = Document(str(template))
 
-    # ── Campos de texto: label em celula -> valor na celula adjacente ─────────
-    campos = [
-        ("cliente",           dados.get("cliente", "")),
-        ("tel",               dados.get("tel", "")),
-        ("preenchido por",    dados.get("preenchido_por", "")),
-        ("endereco",          dados.get("endereco", "")),
-        ("chassi",            dados.get("chassi", "")),
-        ("motor",             dados.get("motor", "")),
-        ("veiculo",           dados.get("veiculo", "")),
-        ("placa",             dados.get("placa", "")),
-        ("ano",               dados.get("ano", "")),
-        ("cor",               dados.get("cor", "")),
-        ("hodometro entrega", dados.get("hodometro_entrega", "")),
-        ("hodometro retorno", dados.get("hodometro_retorno", "")),
-        ("data",              dados.get("data", "")),
-        ("danos",             dados.get("danos", "")),
-        ("observacoes",       dados.get("observacoes", "")),
-        ("sintomas",          dados.get("sintomas", "")),
-        ("responsavel",       dados.get("assinatura_responsavel", "")),
+    WNS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+    def _safe_text(s: str) -> str:
+        """Remove caracteres de controle invalidos em XML."""
+        return re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', str(s))
+
+    def _xml_replace_placeholder(element, new_value: str, pattern: str = r'\[\s*\]', count: int = 1) -> bool:
+        """Substitui pattern nos elementos <w:t> filhos de element. Retorna True se substituiu."""
+        replaced = 0
+        for t in element.iter(f'{{{WNS}}}t'):
+            if not t.text:
+                continue
+            new_t, n = re.subn(pattern, _safe_text(new_value), t.text, count=count - replaced)
+            if n:
+                t.text = new_t
+                replaced += n
+                if replaced >= count:
+                    return True
+        return replaced > 0
+
+    def _cell_fill(cell, value: str) -> None:
+        """Substitui o primeiro [ ] na celula via XML."""
+        if re.search(r'\[\s+\]', cell.text):
+            _xml_replace_placeholder(cell._element, value, r'\[\s+\]')
+
+    def _inline_replace(para, value: str) -> bool:
+        """Substitui a primeira ocorrencia de [ ] no paragrafo via XML."""
+        if re.search(r'\[\s+\]', para.text):
+            return _xml_replace_placeholder(para._element, value, r'\[\s+\]')
+        return False
+
+    tbl0 = doc.tables[0]   # campos de texto (7 linhas x 4 colunas)
+    tbl1 = doc.tables[1]   # checklist acessorios (11 linhas x 24 colunas)
+    tbl2 = doc.tables[2]   # assinaturas (1 linha x 2 colunas)
+
+    # ── Tabela 0: campos de texto ─────────────────────────────────────────────
+    # Estrutura: C0=label, C1=valor, C2=label, C3=valor
+    mapa_t0 = [
+        (0, 1, dados.get("cliente", "")),
+        (0, 3, dados.get("preenchido_por", "")),
+        (1, 1, dados.get("endereco", "")),
+        (1, 3, dados.get("tel", "")),
+        (2, 1, dados.get("chassi", "")),
+        (2, 3, dados.get("motor", "")),
+        (3, 1, dados.get("veiculo", "")),
+        (3, 3, dados.get("placa", "")),
+        (4, 1, dados.get("ano", "")),
+        (4, 3, dados.get("cor", "")),
+        (5, 1, dados.get("hodometro_entrega", "")),
+        (5, 3, dados.get("hodometro_retorno", "")),
+        (6, 3, dados.get("data", "")),
     ]
+    for r, c, valor in mapa_t0:
+        if valor:
+            _cell_fill(tbl0.rows[r].cells[c], valor)
 
-    filled: set = set()
-    for tbl in doc.tables:
-        for row in tbl.rows:
-            cells = row.cells
-            for i, cell in enumerate(cells):
-                cn = _norm(cell.text)
-                for label, valor in campos:
-                    key = f"{label}_{i}_{id(row)}"
-                    if key not in filled and label in cn and valor:
-                        if i + 1 < len(cells):
-                            nxt = cells[i + 1]
-                            if not nxt.text.strip():
-                                nxt.paragraphs[0].clear()
-                                nxt.paragraphs[0].add_run(valor)
-                                filled.add(key)
-                                break
-
-    # ── Combustivel (paragrafo com [ ] MT / [ ] 6/8 / [ ] TC) ───────────────
+    # ── Combustivel: R6 C1 = "[  ] MT [  ] 6/8 [  ] TC" ────────────────────
+    # Cada opcao esta em w:t separados: '[  ]' / ' MT ' / '[  ]' / ...
+    # Estrategia: achar o w:t com o combustivel escolhido e marcar o [  ] anterior
     combustivel = dados.get("combustivel", "").upper()
-    if combustivel:
-        def _all_paras():
-            yield from doc.paragraphs
-            for tbl in doc.tables:
-                for row in tbl.rows:
-                    for cell in row.cells:
-                        yield from cell.paragraphs
+    if combustivel in ("MT", "6/8", "TC"):
+        cell_c = tbl0.rows[6].cells[1]
+        wt_list = [t for t in cell_c._element.iter(f'{{{WNS}}}t')]
+        for idx, t in enumerate(wt_list):
+            if t.text and combustivel in t.text.upper():
+                # Procura o [  ] mais proximo antes deste elemento
+                for prev in reversed(wt_list[:idx]):
+                    if prev.text and re.search(r'\[\s+\]', prev.text):
+                        prev.text = re.sub(r'\[\s+\]', '[x]', prev.text, count=1)
+                        break
+                break
 
-        for para in _all_paras():
-            txt = _para_text(para)
-            if any(op in txt for op in ["MT", "6/8", "TC"]) and "[ ]" in txt:
-                nova = txt
-                for op in ["MT", "6/8", "TC"]:
-                    if op == combustivel:
-                        nova = nova.replace(f"[ ] {op}", f"[X] {op}", 1)
-                        nova = nova.replace(f"[ ]{op}", f"[X]{op}", 1)
-                if nova != txt:
-                    _set_para_text(para, nova)
-
-    # ── Checklist de acessorios (mais especificos primeiro) ───────────────────
-    acessorios = [
-        ("borracha psg d",  dados.get("acc_borracha_psg_d", "")),
-        ("borracha psg t",  dados.get("acc_borracha_psg_t", "")),
-        ("borr. mtr t",     dados.get("acc_borr_mtr_t", "")),
-        ("borr. mtr",       dados.get("acc_borr_mtr", "")),
-        ("asa urubu dd",    dados.get("acc_asa_urubu_dd", "")),
-        ("asa urubu de",    dados.get("acc_asa_urubu_de", "")),
-        ("asa urub td",     dados.get("acc_asa_urub_td", "")),
-        ("asa urub te",     dados.get("acc_asa_urub_te", "")),
-        ("tapete/mala",     dados.get("acc_tapete_mala", "")),
-        ("tapetes",         dados.get("acc_tapetes", "")),
-        ("tampa prx",       dados.get("acc_tampa_prx", "")),
-        ("oleo motor",      dados.get("acc_oleo_motor", "")),
-        ("chave roda",      dados.get("acc_chave_roda", "")),
-        ("sensor re",       dados.get("acc_sensor_re", "")),
-        ("doc. crlv",       dados.get("acc_doc_crlv", "")),
-        ("limpadores",      dados.get("acc_limpadores", "")),
-        ("triangulo",       dados.get("acc_triangulo", "")),
-        ("vidros",          dados.get("acc_vidros", "")),
-        ("alarme",          dados.get("acc_alarme", "")),
-        ("lampadas",        dados.get("acc_lampadas", "")),
-        ("macaco",          dados.get("acc_macaco", "")),
-        ("bagagito",        dados.get("acc_bagagito", "")),
-        ("linguet",         dados.get("acc_linguet", "")),
-        ("calotas",         dados.get("acc_calotas", "")),
-        ("buzina",          dados.get("acc_buzina", "")),
-        ("antena",          dados.get("acc_antena", "")),
-        ("estepe",          dados.get("acc_estepe", "")),
-        ("gnv",             dados.get("acc_gnv", "")),
-        ("agua",            dados.get("acc_agua", "")),
-        ("som",             dados.get("acc_som", "")),
+    # ── Checklist: 30 itens mapeados por (linha_checkbox, coluna_inicio, chave) ─
+    # Estrutura tabela 1:
+    #   linhas impares (1,3,5,7,9): nomes dos itens nas colunas 0,4,8,12,16,20
+    #                               com S/N/A nas colunas 1,2,3 / 5,6,7 / etc.
+    #   linhas pares  (2,4,6,8,10): [ ] nas colunas correspondentes a S/N/A
+    # S = col_base+1, N = col_base+2, A = col_base+3
+    checklist = [
+        # linha_chk, col_base, chave_dados
+        (2,  0,  "acc_calotas"),
+        (2,  4,  "acc_buzina"),
+        (2,  8,  "acc_doc_crlv"),
+        (2,  12, "acc_triangulo"),
+        (2,  16, "acc_antena"),
+        (2,  20, "acc_sensor_re"),
+        (4,  0,  "acc_som"),
+        (4,  4,  "acc_tapetes"),
+        (4,  8,  "acc_limpadores"),
+        (4,  12, "acc_chave_roda"),
+        (4,  16, "acc_vidros"),
+        (4,  20, "acc_oleo_motor"),
+        (6,  0,  "acc_alarme"),
+        (6,  4,  "acc_lampadas"),
+        (6,  8,  "acc_macaco"),
+        (6,  12, "acc_estepe"),
+        (6,  16, "acc_gnv"),
+        (6,  20, "acc_agua"),
+        (8,  0,  "acc_borracha_psg_d"),
+        (8,  4,  "acc_borr_mtr"),
+        (8,  8,  "acc_asa_urubu_dd"),
+        (8,  12, "acc_asa_urub_td"),
+        (8,  16, "acc_tapete_mala"),
+        (8,  20, "acc_tampa_prx"),
+        (10, 0,  "acc_borracha_psg_t"),
+        (10, 4,  "acc_borr_mtr_t"),
+        (10, 8,  "acc_asa_urubu_de"),
+        (10, 12, "acc_asa_urub_te"),
+        (10, 16, "acc_bagagito"),
+        (10, 20, "acc_linguet"),
     ]
-
-    processed: set = set()
-
-    for item_label, valor in acessorios:
-        if not valor or valor.upper() not in ("S", "N", "A"):
+    sna_offset = {"S": 1, "N": 2, "A": 3}
+    for chk_row, col_base, key in checklist:
+        val = dados.get(key, "").upper()
+        if val not in ("S", "N", "A"):
             continue
-        val = valor.upper()
-        ordem = {"S": 0, "N": 1, "A": 2}[val]
-
-        for t_idx, tbl in enumerate(doc.tables):
-            found = False
-            for r_idx, row in enumerate(tbl.rows):
-                if (t_idx, r_idx) in processed:
-                    continue
-                row_text = _norm(" ".join(c.text for c in row.cells))
-                if item_label not in row_text:
-                    continue
-
-                for cell in row.cells:
-                    for para in cell.paragraphs:
-                        txt = _para_text(para)
-                        if "[ ]" not in txt:
-                            continue
-                        nova = txt
-                        # Padrao 1: "[ ] S" / "[ ] N" / "[ ] A"
-                        for op in ["S", "N", "A"]:
-                            if op == val:
-                                nova = nova.replace(f"[ ] {op}", f"[X] {op}", 1)
-                                nova = nova.replace(f"[ ]{op}", f"[X]{op}", 1)
-                        # Padrao 2: posicao ordinal (1=S, 2=N, 3=A)
-                        if nova == txt:
-                            resultado = []
-                            count = 0
-                            j = 0
-                            while j < len(nova):
-                                if nova[j:j+3] == "[ ]":
-                                    resultado.append("[X]" if count == ordem else "[ ]")
-                                    count += 1
-                                    j += 3
-                                else:
-                                    resultado.append(nova[j])
-                                    j += 1
-                            nova = "".join(resultado)
-                        if nova != txt:
-                            _set_para_text(para, nova)
-
-                processed.add((t_idx, r_idx))
-                found = True
+        target_col = col_base + sna_offset[val]
+        cell = tbl1.rows[chk_row].cells[target_col]
+        # Usa XML direto para nao falhar quando [ ] nao esta em <w:r> padrao
+        for t in cell._element.iter(f'{{{WNS}}}t'):
+            if t.text and re.search(r'\[\s*\]', t.text):
+                t.text = re.sub(r'\[\s*\]', '[x]', t.text, count=1)
                 break
-            if found:
-                break
+
+    # ── Paragrafos soltos: OBSERVACOES e SINTOMAS ─────────────────────────────
+    all_paras = list(doc.paragraphs)
+    for i, para in enumerate(all_paras):
+        heading = para.text.strip().upper()
+        if "OBSERVA" in heading and i + 1 < len(all_paras):
+            obs = dados.get("observacoes", "")
+            if obs:
+                nxt = all_paras[i + 1]
+                if re.search(r'\[\s+\]', nxt.text):
+                    _inline_replace(nxt, obs)
+        elif "SINTOMAS" in heading and i + 1 < len(all_paras):
+            sint = dados.get("sintomas", "")
+            if sint:
+                nxt = all_paras[i + 1]
+                if re.search(r'\[\s+\]', nxt.text):
+                    _inline_replace(nxt, sint)
+
+    # ── Assinaturas (tabela 2, sem placeholder, adiciona texto apos label) ────
+    sig_c = dados.get("assinatura_cliente", "")
+    sig_r = dados.get("assinatura_responsavel", "")
+    if sig_c:
+        tbl2.rows[0].cells[0].paragraphs[0].add_run(f" {sig_c}")
+    if sig_r:
+        tbl2.rows[0].cells[1].paragraphs[0].add_run(f" {sig_r}")
 
     # ── Fotos ao final do documento ───────────────────────────────────────────
     if fotos:
@@ -723,6 +708,6 @@ def gerar_vistoria_entrega(dados, fotos: list, caminho_saida: str, template_path
             except Exception:
                 pass
 
-    saida = Path(caminho_saida)
+    saida = _Path(caminho_saida)
     saida.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(saida))
