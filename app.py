@@ -21,6 +21,21 @@ from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_a
 app = Flask(__name__)
 app.secret_key = "ativuz-secret-2026"
 
+# ── Supabase (opcional — só ativa se as env vars estiverem definidas) ─────────
+import os as _os
+
+_sb = None
+
+def _supabase():
+    global _sb
+    if _sb is None:
+        url = _os.environ.get("SUPABASE_URL", "")
+        key = _os.environ.get("SUPABASE_KEY", "")
+        if url and key:
+            from supabase import create_client
+            _sb = create_client(url, key)
+    return _sb
+
 UPLOAD_FOLDER = Path("uploads")
 CONTRATOS_FOLDER = Path("contratos")
 TEMP_FOLDER = Path("temp_preview")
@@ -701,6 +716,40 @@ def gerar_vistoria_route():
         except Exception as e:
             return jsonify({"error": f"Erro ao converter para PDF: {e}"}), 422
 
+    # ── Supabase: upload + registro ───────────────────────────────────────────
+    storage_path = None
+    sb = _supabase()
+    if sb:
+        try:
+            storage_path = f"vistorias/{nome_docx}"
+            sb.storage.from_("documentos").upload(
+                storage_path,
+                Path(caminho_docx).read_bytes(),
+                {"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+            )
+            sb.table("vistorias").insert({
+                "cliente":           dados["cliente_nome"],
+                "telefone":          dados["cliente_telefone"],
+                "endereco":          dados["cliente_endereco"],
+                "preenchido_por":    dados["preenchido_por"],
+                "veiculo":           dados["veiculo"],
+                "placa":             dados["placa"],
+                "cor":               dados["cor"],
+                "ano":               dados["ano"],
+                "chassi":            dados["chassi"],
+                "numero_motor":      dados["numero_motor"],
+                "data_hora":         dados["data_hora"],
+                "hodometro_entrega": dados["hodometro_entrega"],
+                "hodometro_retorno": dados["hodometro_retorno"],
+                "combustivel":       dados["combustivel"],
+                "obs_gerais":        dados["obs_gerais"],
+                "desc_sintomas":     dados["desc_sintomas"],
+                "arquivo_path":      storage_path,
+            }).execute()
+        except Exception:
+            import traceback; traceback.print_exc()
+            # Falha no Supabase não interrompe o download
+
     historico = get_historico()
     historico.append({
         "id": uuid.uuid4().hex,
@@ -713,6 +762,40 @@ def gerar_vistoria_route():
 
     nome_download = nome_pdf if formato == "pdf" else nome_docx
     return jsonify({"download_url": url_for("baixar_vistoria", nome=nome_download)})
+
+
+# ── Histórico de Vistorias (Supabase) ─────────────────────────────────────────
+
+@app.route("/historico/vistorias")
+def historico_vistorias():
+    sb = _supabase()
+    vistorias = []
+    erro = None
+    if sb:
+        try:
+            res = sb.table("vistorias").select(
+                "id, cliente, placa, veiculo, preenchido_por, data_hora, criado_em, arquivo_path"
+            ).order("criado_em", desc=True).execute()
+            vistorias = res.data or []
+        except Exception as e:
+            erro = str(e)
+    else:
+        erro = "Supabase não configurado (SUPABASE_URL / SUPABASE_KEY ausentes)."
+    return render_template("historico_vistorias.html", vistorias=vistorias, erro=erro, active="hist_vistorias")
+
+
+@app.route("/historico/vistorias/download/<vistoria_id>")
+def download_vistoria_supabase(vistoria_id):
+    sb = _supabase()
+    if not sb:
+        abort(503)
+    try:
+        res = sb.table("vistorias").select("arquivo_path").eq("id", vistoria_id).single().execute()
+        path = res.data["arquivo_path"]
+        signed = sb.storage.from_("documentos").create_signed_url(path, 60)
+        return redirect(signed["signedURL"])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/vistoria/download/<nome>")
