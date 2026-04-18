@@ -262,12 +262,13 @@ async function gerarVistoria(formato) {
       body: fd,
     });
     const ct = resp.headers.get('content-type') || '';
-    if (!resp.ok || resp.redirected || ct.includes('text/html')) {
+    if (resp.redirected || ct.includes('text/html')) {
       window.location.href = resp.url;
       return;
     }
     const data = await resp.json();
-    if (data.error) { alert(data.error); return; }
+    if (data.error) { alert('Erro: ' + data.error); return; }
+    if (!data.download_url) { alert('Resposta inesperada do servidor.'); return; }
     window.location.href = data.download_url;
   } catch (_) {
     alert('Erro de conexão. Tente novamente.');

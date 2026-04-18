@@ -718,7 +718,11 @@ def gerar_vistoria_route():
 
     # ── Supabase: upload + registro ───────────────────────────────────────────
     storage_path = None
-    sb = _supabase()
+    try:
+        sb = _supabase()
+    except Exception:
+        import traceback; traceback.print_exc()
+        sb = None
     if sb:
         try:
             storage_path = f"vistorias/{nome_docx}"
