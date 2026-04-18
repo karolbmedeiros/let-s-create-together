@@ -752,15 +752,18 @@ def gerar_vistoria_route():
         except Exception:
             import traceback; traceback.print_exc()
 
-    historico = get_historico()
-    historico.append({
-        "id": uuid.uuid4().hex,
-        "locatario_nome": dados["cliente_nome"],
-        "data_hora": agora.strftime("%d/%m/%Y %H:%M"),
-        "template": "VISTORIA",
-        "arquivo": nome_docx,
-    })
-    save_historico(historico)
+    try:
+        historico = get_historico()
+        historico.append({
+            "id": uuid.uuid4().hex,
+            "locatario_nome": dados["cliente_nome"],
+            "data_hora": agora.strftime("%d/%m/%Y %H:%M"),
+            "template": "VISTORIA",
+            "arquivo": nome_docx,
+        })
+        save_historico(historico)
+    except Exception:
+        import traceback; traceback.print_exc()
 
     return jsonify({"redirect_url": url_for("historico_vistorias")})
 
