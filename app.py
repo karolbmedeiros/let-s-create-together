@@ -5,6 +5,9 @@ from flask import (
 from werkzeug.utils import secure_filename
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+_BRT = ZoneInfo("America/Sao_Paulo")
 from io import BytesIO
 import json
 import platform
@@ -612,7 +615,7 @@ def processar_vistoria():
 
 @app.route("/vistoria/gerar", methods=["POST"])
 def gerar_vistoria_route():
-    agora = datetime.now()
+    agora = datetime.now(_BRT)
     dados = {
         "cliente_nome":      request.form.get("cliente_nome", ""),
         "cliente_telefone":  request.form.get("cliente_telefone", ""),
