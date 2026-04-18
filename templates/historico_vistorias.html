@@ -28,15 +28,19 @@ tbody tr { border-bottom: 1px solid #f1f5f9; }
 tbody tr:last-child { border-bottom: none; }
 tbody td { padding: 10px 14px; color: #374151; vertical-align: middle; }
 tbody tr:hover { background: #f8fafc; }
-.btn-baixar {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: #1e3a5f; color: #fff;
+.btn-acao {
+  display: inline-flex; align-items: center; gap: 5px;
   border: none; border-radius: 6px;
-  padding: 6px 14px; font-size: 0.8rem; font-weight: 600;
+  padding: 5px 11px; font-size: 0.78rem; font-weight: 600;
   cursor: pointer; text-decoration: none;
-  transition: background 0.15s;
+  transition: opacity 0.15s;
+  color: #fff;
 }
-.btn-baixar:hover { background: #2d4f7c; }
+.btn-acao:hover { opacity: 0.85; }
+.btn-docx  { background: #1e3a5f; }
+.btn-pdf   { background: #b91c1c; }
+.btn-edit  { background: #6b7280; }
+.acoes { display: flex; gap: 5px; flex-wrap: wrap; }
 .empty-state {
   text-align: center; padding: 3rem 1rem; color: #94a3b8;
 }
@@ -49,7 +53,7 @@ tbody tr:hover { background: #f8fafc; }
 
 <div class="page-header">
   <h1 class="page-title">Histórico de Vistorias</h1>
-  <p class="page-sub">Registros salvos no Supabase — clique em "Baixar" para gerar o link de download</p>
+  <p class="page-sub">Registros salvos no Supabase</p>
 </div>
 
 {% if erro %}
@@ -80,13 +84,29 @@ tbody tr:hover { background: #f8fafc; }
           <td style="white-space:nowrap">{{ v.data_hora or '—' }}</td>
           <td>
             {% if v.arquivo_path %}
-            <a class="btn-baixar"
-               href="{{ url_for('download_vistoria_supabase', vistoria_id=v.id) }}">
-              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
-                   viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Baixar
-            </a>
+            <div class="acoes">
+              <a class="btn-acao btn-docx"
+                 href="{{ url_for('download_vistoria_supabase', vistoria_id=v.id) }}">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                DOCX
+              </a>
+              <a class="btn-acao btn-pdf"
+                 href="{{ url_for('download_vistoria_pdf', vistoria_id=v.id) }}">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                PDF
+              </a>
+              <a class="btn-acao btn-edit"
+                 href="{{ url_for('editar_vistoria', vistoria_id=v.id) }}">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"
+                     viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                Editar
+              </a>
+            </div>
             {% else %}
             <span style="color:#94a3b8; font-size:0.8rem;">sem arquivo</span>
             {% endif %}

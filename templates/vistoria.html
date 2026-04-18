@@ -35,11 +35,12 @@
 </style>
 
 <div class="page-header">
-  <h1 class="page-title">Vistoria de Entrega</h1>
-  <p class="page-sub">Ordem de Serviço e Vistoria de Veículo — preencha e baixe o documento</p>
+  <h1 class="page-title">{{ 'Editar Vistoria' if vistoria else 'Vistoria de Entrega' }}</h1>
+  <p class="page-sub">Ordem de Serviço e Vistoria de Veículo — preencha e salve</p>
 </div>
 
 <form action="{{ url_for('gerar_vistoria_route') }}" method="post" enctype="multipart/form-data" id="form-vistoria">
+  <input type="hidden" name="edit_id" value="{{ edit_id or '' }}">
 
   <!-- ── Dados do Cliente ── -->
   <div class="card">
@@ -50,22 +51,26 @@
       <div class="form-group col-2">
         <label class="form-label" for="cliente_nome">Cliente</label>
         <input type="text" name="cliente_nome" id="cliente_nome" class="form-input"
-               placeholder="Nome completo do cliente">
+               placeholder="Nome completo do cliente"
+               value="{{ vistoria.cliente if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="cliente_telefone">Telefone</label>
         <input type="text" name="cliente_telefone" id="cliente_telefone" class="form-input"
-               placeholder="(84) 99999-9999">
+               placeholder="(84) 99999-9999"
+               value="{{ vistoria.telefone if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="preenchido_por">Preenchido por</label>
         <input type="text" name="preenchido_por" id="preenchido_por" class="form-input"
-               placeholder="Nome do responsável">
+               placeholder="Nome do responsável"
+               value="{{ vistoria.preenchido_por if vistoria else '' }}">
       </div>
       <div class="form-group col-2">
         <label class="form-label" for="cliente_endereco">Endereço</label>
         <input type="text" name="cliente_endereco" id="cliente_endereco" class="form-input"
-               placeholder="Rua, número, bairro, cidade/UF">
+               placeholder="Rua, número, bairro, cidade/UF"
+               value="{{ vistoria.endereco if vistoria else '' }}">
       </div>
     </div>
   </div>
@@ -79,40 +84,48 @@
       <div class="form-group col-2">
         <label class="form-label" for="veiculo">Veículo</label>
         <input type="text" name="veiculo" id="veiculo" class="form-input"
-               placeholder="Marca/Modelo">
+               placeholder="Marca/Modelo"
+               value="{{ vistoria.veiculo if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="placa">Placa</label>
         <input type="text" name="placa" id="placa" class="form-input"
-               placeholder="ABC1D23" style="text-transform:uppercase">
+               placeholder="ABC1D23" style="text-transform:uppercase"
+               value="{{ vistoria.placa if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="cor">Cor</label>
-        <input type="text" name="cor" id="cor" class="form-input" placeholder="Prata">
+        <input type="text" name="cor" id="cor" class="form-input" placeholder="Prata"
+               value="{{ vistoria.cor if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="ano">Ano</label>
-        <input type="text" name="ano" id="ano" class="form-input" placeholder="2022">
+        <input type="text" name="ano" id="ano" class="form-input" placeholder="2022"
+               value="{{ vistoria.ano if vistoria else '' }}">
       </div>
       <div class="form-group col-2">
         <label class="form-label" for="chassi">Número CHASSI</label>
         <input type="text" name="chassi" id="chassi" class="form-input"
-               placeholder="9BD158476N0123456">
+               placeholder="9BD158476N0123456"
+               value="{{ vistoria.chassi if vistoria else '' }}">
       </div>
       <div class="form-group col-2">
         <label class="form-label" for="numero_motor">Número Motor</label>
         <input type="text" name="numero_motor" id="numero_motor" class="form-input"
-               placeholder="131A1000000">
+               placeholder="131A1000000"
+               value="{{ vistoria.numero_motor if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="hodometro_entrega">Hodômetro Entrega</label>
         <input type="text" name="hodometro_entrega" id="hodometro_entrega" class="form-input"
-               placeholder="45.200 km">
+               placeholder="45.200 km"
+               value="{{ vistoria.hodometro_entrega if vistoria else '' }}">
       </div>
       <div class="form-group">
         <label class="form-label" for="hodometro_retorno">Hodômetro Retorno</label>
         <input type="text" name="hodometro_retorno" id="hodometro_retorno" class="form-input"
-               placeholder="—">
+               placeholder="—"
+               value="{{ vistoria.hodometro_retorno if vistoria else '' }}">
       </div>
       <div class="form-group col-2">
         <label class="form-label">Combustível</label>
@@ -120,6 +133,7 @@
           {% for val, label in [('1/4','1/4'),('MT','MT (metade)'),('3/4','3/4'),('TC','TC (cheio)')] %}
           <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer; font-size:0.88rem;">
             <input type="radio" name="combustivel" value="{{ val }}"
+                   {% if vistoria and vistoria.combustivel == val %}checked{% endif %}
                    style="accent-color:#3b82f6; width:16px; height:16px; cursor:pointer;">
             {{ label }}
           </label>
@@ -190,12 +204,12 @@
       <div class="form-group col-2">
         <label class="form-label" for="obs_gerais">Observações Gerais</label>
         <textarea name="obs_gerais" id="obs_gerais" class="form-input" rows="3"
-                  placeholder="Observações gerais..."></textarea>
+                  placeholder="Observações gerais...">{{ vistoria.obs_gerais if vistoria else '' }}</textarea>
       </div>
       <div class="form-group col-2">
         <label class="form-label" for="desc_sintomas">Descrição dos Sintomas</label>
         <textarea name="desc_sintomas" id="desc_sintomas" class="form-input" rows="4"
-                  placeholder="Descreva os sintomas detalhadamente..."></textarea>
+                  placeholder="Descreva os sintomas detalhadamente...">{{ vistoria.desc_sintomas if vistoria else '' }}</textarea>
       </div>
     </div>
   </div>
@@ -216,17 +230,11 @@
 
   <!-- ── Ação ── -->
   <div class="form-actions">
-    <button type="button" class="btn btn-primary btn-lg" id="btn-pdf" onclick="gerarVistoria('pdf')">
+    <button type="button" class="btn btn-primary btn-lg" id="btn-salvar" onclick="salvarVistoria()">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-        <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Baixar PDF
-    </button>
-    <button type="button" class="btn btn-secondary btn-lg" id="btn-docx" onclick="gerarVistoria('docx')">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/></svg>
-      Baixar DOCX
+           viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+        <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      {{ 'Salvar Edição' if vistoria else 'Salvar' }}
     </button>
   </div>
 
@@ -240,23 +248,20 @@ function setSNA(btn, campo, valor) {
   document.getElementById('hid_' + campo).value = valor;
 }
 
-async function gerarVistoria(formato) {
-  const form    = document.getElementById('form-vistoria');
-  const btnPdf  = document.getElementById('btn-pdf');
-  const btnDocx = document.getElementById('btn-docx');
-  const btn     = formato === 'pdf' ? btnPdf : btnDocx;
-  const orig    = btn.innerHTML;
+async function salvarVistoria() {
+  const form = document.getElementById('form-vistoria');
+  const btn  = document.getElementById('btn-salvar');
+  const orig = btn.innerHTML;
 
-  btnPdf.disabled  = true;
-  btnDocx.disabled = true;
+  btn.disabled = true;
   btn.innerHTML = `
     <svg class="spin" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
          viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-    Gerando...`;
+    Salvando...`;
 
   try {
     const fd = new FormData(form);
-    fd.set('formato', formato);
+    fd.set('formato', 'docx');
     const resp = await fetch('{{ url_for("gerar_vistoria_route") }}', {
       method: 'POST',
       body: fd,
@@ -268,13 +273,11 @@ async function gerarVistoria(formato) {
     }
     const data = await resp.json();
     if (data.error) { alert('Erro: ' + data.error); return; }
-    if (!data.download_url) { alert('Resposta inesperada do servidor.'); return; }
-    window.location.href = data.download_url;
+    window.location.href = data.redirect_url || '{{ url_for("historico_vistorias") }}';
   } catch (_) {
     alert('Erro de conexão. Tente novamente.');
   } finally {
-    btnPdf.disabled  = false;
-    btnDocx.disabled = false;
+    btn.disabled = false;
     btn.innerHTML = orig;
   }
 }

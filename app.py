@@ -501,8 +501,7 @@ VISTORIA_TEMPLATE = DOCX_TEMPLATES / "VISTORIA_TESTE_1.docx"
 
 @app.route("/vistoria", methods=["GET"])
 def pagina_vistoria():
-    template_ok = VISTORIA_TEMPLATE.exists()
-    return render_template("vistoria.html", active="vistoria", template_ok=template_ok)
+    return render_template("vistoria.html", active="vistoria", vistoria=None, edit_id=None)
 
 
 @app.route("/vistoria", methods=["POST"])
@@ -690,13 +689,11 @@ def gerar_vistoria_route():
             foto.save(str(p))
             foto_path = str(p)
 
-    formato    = request.form.get("formato", "docx").lower()
+    edit_id    = request.form.get("edit_id", "").strip()
     placa_slug = _slugify(dados["placa"] or "PLACA")
     data_slug  = agora.strftime("%d.%m.%Y")
-    nome_docx  = f"VISTORIA_{placa_slug}_{data_slug}.docx"
-    nome_pdf   = nome_docx.replace(".docx", ".pdf")
+    nome_docx    = f"VISTORIA_{placa_slug}_{data_slug}.docx"
     caminho_docx = str(CONTRATOS_FOLDER / nome_docx)
-    caminho_pdf  = str(CONTRATOS_FOLDER / nome_pdf)
 
     try:
         gerar_vistoria_nova(dados, foto_path, caminho_docx)
@@ -706,15 +703,6 @@ def gerar_vistoria_route():
     finally:
         if foto_path:
             Path(foto_path).unlink(missing_ok=True)
-
-    arquivo_historico = nome_docx
-
-    if formato == "pdf":
-        try:
-            _converter_pdf(caminho_docx, caminho_pdf)
-            arquivo_historico = nome_pdf
-        except Exception as e:
-            return jsonify({"error": f"Erro ao converter para PDF: {e}"}), 422
 
     # ── Supabase: upload + registro ───────────────────────────────────────────
     storage_path = None
@@ -750,9 +738,18 @@ def gerar_vistoria_route():
                 "desc_sintomas":     dados["desc_sintomas"],
                 "arquivo_path":      storage_path,
             }).execute()
+
+            if edit_id:
+                try:
+                    old = sb.table("vistorias").select("arquivo_path").eq("id", edit_id).single().execute()
+                    old_path = (old.data or {}).get("arquivo_path")
+                    if old_path and old_path != storage_path:
+                        sb.storage.from_("documentos").remove([old_path])
+                    sb.table("vistorias").delete().eq("id", edit_id).execute()
+                except Exception:
+                    pass
         except Exception:
             import traceback; traceback.print_exc()
-            # Falha no Supabase não interrompe o download
 
     historico = get_historico()
     historico.append({
@@ -760,12 +757,11 @@ def gerar_vistoria_route():
         "locatario_nome": dados["cliente_nome"],
         "data_hora": agora.strftime("%d/%m/%Y %H:%M"),
         "template": "VISTORIA",
-        "arquivo": arquivo_historico,
+        "arquivo": nome_docx,
     })
     save_historico(historico)
 
-    nome_download = nome_pdf if formato == "pdf" else nome_docx
-    return jsonify({"download_url": url_for("baixar_vistoria", nome=nome_download)})
+    return jsonify({"redirect_url": url_for("historico_vistorias")})
 
 
 # ── Histórico de Vistorias (Supabase) ─────────────────────────────────────────
@@ -800,6 +796,49 @@ def download_vistoria_supabase(vistoria_id):
         return redirect(signed["signedURL"])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/historico/vistorias/<vistoria_id>/editar")
+def editar_vistoria(vistoria_id):
+    sb = _supabase()
+    if not sb:
+        flash("Supabase não configurado.", "erro")
+        return redirect(url_for("historico_vistorias"))
+    try:
+        res = sb.table("vistorias").select("*").eq("id", vistoria_id).single().execute()
+        vistoria = res.data
+    except Exception as e:
+        flash(f"Erro ao buscar vistoria: {e}", "erro")
+        return redirect(url_for("historico_vistorias"))
+    return render_template("vistoria.html", active="vistoria", vistoria=vistoria, edit_id=vistoria_id)
+
+
+@app.route("/historico/vistorias/download/<vistoria_id>/pdf")
+def download_vistoria_pdf(vistoria_id):
+    sb = _supabase()
+    if not sb:
+        abort(503)
+    try:
+        res = sb.table("vistorias").select("arquivo_path").eq("id", vistoria_id).single().execute()
+        docx_storage_path = res.data["arquivo_path"]
+        docx_bytes = sb.storage.from_("documentos").download(docx_storage_path)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    tmp_docx = TEMP_FOLDER / f"{uuid.uuid4().hex}.docx"
+    tmp_pdf  = tmp_docx.with_suffix(".pdf")
+    try:
+        tmp_docx.write_bytes(docx_bytes)
+        _converter_pdf(str(tmp_docx), str(tmp_pdf))
+        pdf_bytes = tmp_pdf.read_bytes()
+    except Exception as e:
+        return jsonify({"error": f"Erro ao gerar PDF: {e}"}), 422
+    finally:
+        tmp_docx.unlink(missing_ok=True)
+        tmp_pdf.unlink(missing_ok=True)
+
+    nome_pdf = Path(docx_storage_path).stem + ".pdf"
+    return send_file(BytesIO(pdf_bytes), as_attachment=True, download_name=nome_pdf, mimetype="application/pdf")
 
 
 @app.route("/vistoria/download/<nome>")
