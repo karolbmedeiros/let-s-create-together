@@ -629,6 +629,18 @@ def processar_vistoria():
 
 @app.route("/vistoria/gerar", methods=["POST"])
 def gerar_vistoria_route():
+    foto_path = None
+    try:
+        return _gerar_vistoria_impl()
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        return jsonify({"error": f"Erro interno: {e}"}), 500
+    finally:
+        if foto_path:
+            Path(foto_path).unlink(missing_ok=True)
+
+
+def _gerar_vistoria_impl():
     agora = datetime.now(_BRT)
     dados = {
         "cliente_nome":      request.form.get("cliente_nome", ""),

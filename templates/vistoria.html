@@ -282,12 +282,10 @@ async function salvarVistoria() {
       method: 'POST',
       body: fd,
     });
-    const ct = resp.headers.get('content-type') || '';
-    if (resp.redirected || ct.includes('text/html')) {
-      window.location.href = resp.url;
-      return;
-    }
-    const data = await resp.json();
+    if (resp.redirected) { window.location.href = resp.url; return; }
+    let data;
+    try { data = await resp.json(); }
+    catch { alert('Erro no servidor. Verifique os logs do Render.'); return; }
     if (data.error) { alert('Erro: ' + data.error); return; }
     window.location.href = data.redirect_url || '{{ url_for("historico_vistorias") }}';
   } catch (_) {
