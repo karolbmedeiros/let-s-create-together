@@ -83,3 +83,15 @@ alter table public.historico_docs disable row level security;
 -- ── Colunas deletado (soft delete) nas tabelas existentes ────────────────────
 alter table public.contratos_locacao add column if not exists deletado boolean default false;
 alter table public.vistorias         add column if not exists deletado boolean default false;
+
+
+-- ── Usuários do sistema ───────────────────────────────────────────────────────
+create table if not exists public.usuarios (
+  id          uuid primary key default gen_random_uuid(),
+  nome        text unique not null,
+  senha_hash  text not null,
+  ativo       boolean default true,
+  criado_em   timestamptz default now()
+);
+
+alter table public.usuarios disable row level security;

@@ -1,8 +1,9 @@
 from flask import (
     Flask, render_template, request, redirect,
-    url_for, send_file, flash, jsonify, abort
+    url_for, send_file, flash, jsonify, abort, session
 )
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -19,13 +20,114 @@ import uuid
 from gerar_contrato import gerar_docx, gerar_termo_quitacao, gerar_notificacao_avalista, gerar_notificacao_inadimplente, gerar_vistoria_entrega, gerar_vistoria_nova, nome_arquivo_saida
 
 app = Flask(__name__)
-app.secret_key = "ativuz-secret-2026"
+app.secret_key = _os.environ.get("SECRET_KEY", "ativuz-secret-dev-2026")
 
 
 @app.errorhandler(Exception)
 def handle_any_error(e):
     import traceback; traceback.print_exc()
     return jsonify({"error": str(e)}), 500
+
+
+# ── Autenticação ──────────────────────────────────────────────────────────────
+
+_ROTAS_PUBLICAS = {"login", "static"}
+
+@app.before_request
+def verificar_login():
+    if request.endpoint in _ROTAS_PUBLICAS:
+        return
+    if not session.get("usuario"):
+        return redirect(url_for("login"))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if session.get("usuario"):
+        return redirect(url_for("dashboard"))
+    erro = None
+    if request.method == "POST":
+        nome  = request.form.get("nome", "").strip()
+        senha = request.form.get("senha", "")
+        sb = _supabase()
+        if not sb:
+            erro = "Serviço indisponível. Tente novamente."
+        else:
+            try:
+                res = sb.table("usuarios").select("nome, senha_hash") \
+                    .eq("nome", nome).eq("ativo", True).single().execute()
+                usuario = res.data
+                if usuario and check_password_hash(usuario["senha_hash"], senha):
+                    session["usuario"] = nome
+                    return redirect(url_for("dashboard"))
+                else:
+                    erro = "Nome ou senha incorretos."
+            except Exception:
+                erro = "Nome ou senha incorretos."
+    return render_template("login.html", erro=erro)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/admin/novo-usuario", methods=["GET", "POST"])
+def admin_novo_usuario():
+    token_correto = _os.environ.get("ADMIN_TOKEN", "")
+    token = request.args.get("token", "")
+    if not token_correto or token != token_correto:
+        abort(403)
+    mensagem = None
+    erro = None
+    if request.method == "POST":
+        nome  = request.form.get("nome", "").strip()
+        senha = request.form.get("senha", "")
+        if not nome or not senha:
+            erro = "Nome e senha são obrigatórios."
+        else:
+            sb = _supabase()
+            if not sb:
+                erro = "Supabase não configurado."
+            else:
+                try:
+                    sb.table("usuarios").insert({
+                        "nome": nome,
+                        "senha_hash": generate_password_hash(senha),
+                        "ativo": True,
+                    }).execute()
+                    mensagem = f"Usuário '{nome}' criado com sucesso!"
+                except Exception as exc:
+                    erro = f"Erro ao criar usuário: {exc}"
+    return f"""
+    <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Novo Usuário — Admin</title>
+    <style>body{{font-family:Inter,sans-serif;background:#f0f2f7;display:flex;
+    align-items:center;justify-content:center;min-height:100vh;}}
+    .card{{background:#fff;border-radius:14px;padding:2rem;width:360px;
+    box-shadow:0 4px 20px rgba(0,0,0,.1);}}
+    h1{{font-size:1.1rem;margin-bottom:1.5rem;}}
+    label{{font-size:.75rem;font-weight:600;text-transform:uppercase;
+    letter-spacing:.05em;color:#475569;display:block;margin-bottom:.3rem;}}
+    input{{width:100%;padding:.6rem .8rem;border:1.5px solid #e2e8f0;border-radius:8px;
+    font-family:inherit;font-size:.9rem;margin-bottom:1rem;outline:none;}}
+    input:focus{{border-color:#4361ee;}}
+    button{{width:100%;padding:.7rem;background:#4361ee;color:#fff;border:none;
+    border-radius:8px;font-weight:700;font-size:.9rem;cursor:pointer;}}
+    .ok{{color:#166534;background:#f0fdf4;border:1px solid #bbf7d0;
+    border-radius:8px;padding:.6rem .9rem;font-size:.85rem;margin-bottom:1rem;}}
+    .err{{color:#991b1b;background:#fef2f2;border:1px solid #fecaca;
+    border-radius:8px;padding:.6rem .9rem;font-size:.85rem;margin-bottom:1rem;}}
+    </style></head><body><div class="card">
+    <h1>Criar novo usuário</h1>
+    {"<div class='ok'>"+mensagem+"</div>" if mensagem else ""}
+    {"<div class='err'>"+erro+"</div>" if erro else ""}
+    <form method="POST" action="?token={token}">
+    <label>Nome</label><input name="nome" required>
+    <label>Senha</label><input type="password" name="senha" required>
+    <button>Criar usuário</button></form></div></body></html>
+    """
 
 # ── Supabase (opcional — só ativa se as env vars estiverem definidas) ─────────
 import os as _os
