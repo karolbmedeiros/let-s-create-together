@@ -4,6 +4,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
+import os as _os
 from pathlib import Path
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -130,7 +131,6 @@ def admin_novo_usuario():
     """
 
 # ── Supabase (opcional — só ativa se as env vars estiverem definidas) ─────────
-import os as _os
 
 _sb = None
 
