@@ -673,7 +673,7 @@ def historico_contratos():
             res = sb.table("contratos_locacao").select(
                 "id, locatario_nome, locatario_cpf, veiculo_placa, veiculo_marca, "
                 "veiculo_modelo, contrato_inicio, valor_semanal, arquivo_path, criado_em"
-            ).order("criado_em", desc=True).execute()
+            ).neq("deletado", True).order("criado_em", desc=True).execute()
             contratos = res.data or []
         except Exception as e:
             erro = str(e)
@@ -681,6 +681,17 @@ def historico_contratos():
         erro = "Supabase não configurado."
     return render_template("historico_contratos.html", contratos=contratos, erro=erro,
                            active="hist_contratos")
+
+
+@app.route("/historico/contratos/<contrato_id>/excluir", methods=["POST"])
+def excluir_contrato_locacao(contrato_id):
+    sb = _supabase()
+    if sb:
+        try:
+            sb.table("contratos_locacao").update({"deletado": True}).eq("id", contrato_id).execute()
+        except Exception:
+            import traceback; traceback.print_exc()
+    return jsonify({"ok": True})
 
 
 @app.route("/historico/contratos/download/<contrato_id>")
@@ -1039,13 +1050,24 @@ def historico_vistorias():
         try:
             res = sb.table("vistorias").select(
                 "id, cliente, placa, veiculo, preenchido_por, data_hora, criado_em, arquivo_path"
-            ).order("criado_em", desc=True).execute()
+            ).neq("deletado", True).order("criado_em", desc=True).execute()
             vistorias = res.data or []
         except Exception as e:
             erro = str(e)
     else:
         erro = "Supabase não configurado (SUPABASE_URL / SUPABASE_KEY ausentes)."
     return render_template("historico_vistorias.html", vistorias=vistorias, erro=erro, active="hist_vistorias")
+
+
+@app.route("/historico/vistorias/<vistoria_id>/excluir", methods=["POST"])
+def excluir_vistoria(vistoria_id):
+    sb = _supabase()
+    if sb:
+        try:
+            sb.table("vistorias").update({"deletado": True}).eq("id", vistoria_id).execute()
+        except Exception:
+            import traceback; traceback.print_exc()
+    return jsonify({"ok": True})
 
 
 @app.route("/historico/vistorias/download/<vistoria_id>")
