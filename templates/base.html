@@ -19,12 +19,12 @@
 
   <!-- ── Sidebar ── -->
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      <div class="logo-icon">AV</div>
-      <div>
-        <span class="brand-name">ATIVUZ</span>
-        <span class="brand-sub">Gestão de Contratos</span>
-      </div>
+    <div class="sidebar-brand" style="justify-content:center; padding: 18px 16px;">
+      <a href="{{ url_for('dashboard') }}">
+        <img src="{{ url_for('static', filename='ativuz-logo.png') }}"
+             alt="ATIVUZ Veículos"
+             style="width:140px; display:block;">
+      </a>
     </div>
 
     <nav class="sidebar-nav">
