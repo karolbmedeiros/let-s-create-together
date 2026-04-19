@@ -1,13 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Contrato de Locação — ATIVUZ{% endblock %}
+{% block title %}{{ 'Editar Contrato' if contrato else 'Contrato de Locação' }} — ATIVUZ{% endblock %}
 
 {% block content %}
 <div class="page-header">
-  <h1 class="page-title">Contrato de Locação 2026</h1>
-  <p class="page-sub">Preencha os dados e gere o contrato em DOCX ou PDF</p>
+  <h1 class="page-title">{{ 'Editar Contrato de Locação' if contrato else 'Contrato de Locação 2026' }}</h1>
+  <p class="page-sub">Preencha os dados e salve — o contrato ficará disponível no histórico</p>
 </div>
 
-<form action="{{ url_for('gerar_contrato_locacao_route') }}" method="post" id="form-contrato-locacao">
+<form id="form-contrato-locacao">
+  <input type="hidden" name="edit_id" value="{{ edit_id or '' }}">
+
+  {% macro field(name, label, placeholder='', col2=false) %}
+  <div class="form-group {{ 'col-2' if col2 }}">
+    <label class="form-label">{{ label }}</label>
+    <input type="text" name="{{ name }}" class="form-input"
+           placeholder="{{ placeholder }}"
+           value="{{ contrato[name] if contrato and contrato[name] else '' }}">
+  </div>
+  {% endmacro %}
 
   <!-- ── Locatário ── -->
   <div class="card">
@@ -15,31 +25,12 @@
       <h2 class="card-title"><span class="section-pill pill-blue">Locatário</span></h2>
     </div>
     <div class="form-grid">
-      <div class="form-group col-2">
-        <label class="form-label">Nome completo</label>
-        <input type="text" name="locatario_nome" class="form-input" placeholder="João da Silva">
-      </div>
-      <div class="form-group">
-        <label class="form-label">RG</label>
-        <input type="text" name="locatario_rg" class="form-input" placeholder="0.000.000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">CPF</label>
-        <input type="text" name="locatario_cpf" class="form-input" placeholder="000.000.000-00">
-      </div>
-      <div class="form-group col-2">
-        <label class="form-label">Endereço</label>
-        <input type="text" name="locatario_endereco" class="form-input"
-               placeholder="Rua Exemplo, 123, Bairro, Natal/RN">
-      </div>
-      <div class="form-group">
-        <label class="form-label">CEP</label>
-        <input type="text" name="locatario_cep" class="form-input" placeholder="59000-000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Telefone / WhatsApp</label>
-        <input type="text" name="locatario_telefone" class="form-input" placeholder="(84) 99999-9999">
-      </div>
+      {{ field('locatario_nome',     'Nome completo',      'João da Silva', col2=true) }}
+      {{ field('locatario_rg',       'RG',                 '0.000.000') }}
+      {{ field('locatario_cpf',      'CPF',                '000.000.000-00') }}
+      {{ field('locatario_endereco', 'Endereço',           'Rua Exemplo, 123, Natal/RN', col2=true) }}
+      {{ field('locatario_cep',      'CEP',                '59000-000') }}
+      {{ field('locatario_telefone', 'Telefone / WhatsApp','(84) 99999-9999') }}
     </div>
   </div>
 
@@ -49,23 +40,10 @@
       <h2 class="card-title"><span class="section-pill pill-green">Avalista</span></h2>
     </div>
     <div class="form-grid">
-      <div class="form-group col-2">
-        <label class="form-label">Nome completo</label>
-        <input type="text" name="avalista_nome" class="form-input" placeholder="Maria da Silva">
-      </div>
-      <div class="form-group">
-        <label class="form-label">CPF</label>
-        <input type="text" name="avalista_cpf" class="form-input" placeholder="000.000.000-00">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Telefone</label>
-        <input type="text" name="avalista_telefone" class="form-input" placeholder="(84) 99999-9999">
-      </div>
-      <div class="form-group col-2">
-        <label class="form-label">Endereço</label>
-        <input type="text" name="avalista_endereco" class="form-input"
-               placeholder="Rua Exemplo, 456, Bairro, Natal/RN">
-      </div>
+      {{ field('avalista_nome',     'Nome completo', 'Maria da Silva', col2=true) }}
+      {{ field('avalista_cpf',      'CPF',           '000.000.000-00') }}
+      {{ field('avalista_telefone', 'Telefone',      '(84) 99999-9999') }}
+      {{ field('avalista_endereco', 'Endereço',      'Rua Exemplo, 456, Natal/RN', col2=true) }}
     </div>
   </div>
 
@@ -75,39 +53,19 @@
       <h2 class="card-title"><span class="section-pill pill-teal">Veículo</span></h2>
     </div>
     <div class="form-grid">
-      <div class="form-group col-2">
-        <label class="form-label">Descrição</label>
-        <input type="text" name="veiculo_descricao" class="form-input" placeholder="Carro de passeio">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Marca</label>
-        <input type="text" name="veiculo_marca" class="form-input" placeholder="Chevrolet">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Modelo</label>
-        <input type="text" name="veiculo_modelo" class="form-input" placeholder="Onix">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Ano</label>
-        <input type="text" name="veiculo_ano" class="form-input" placeholder="2022">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Cor</label>
-        <input type="text" name="veiculo_cor" class="form-input" placeholder="Prata">
-      </div>
+      {{ field('veiculo_descricao', 'Descrição',        'Carro de passeio', col2=true) }}
+      {{ field('veiculo_marca',     'Marca',            'Chevrolet') }}
+      {{ field('veiculo_modelo',    'Modelo',           'Onix') }}
+      {{ field('veiculo_ano',       'Ano',              '2022') }}
+      {{ field('veiculo_cor',       'Cor',              'Prata') }}
       <div class="form-group">
         <label class="form-label">Placa</label>
         <input type="text" name="veiculo_placa" class="form-input" placeholder="ABC1D23"
-               style="text-transform:uppercase">
+               style="text-transform:uppercase"
+               value="{{ contrato.veiculo_placa if contrato and contrato.veiculo_placa else '' }}">
       </div>
-      <div class="form-group col-2">
-        <label class="form-label">N° Chassi</label>
-        <input type="text" name="veiculo_chassi" class="form-input" placeholder="9BD158476N0123456">
-      </div>
-      <div class="form-group col-2">
-        <label class="form-label">N° Motor</label>
-        <input type="text" name="veiculo_motor" class="form-input" placeholder="131A1000000">
-      </div>
+      {{ field('veiculo_chassi', 'N° Chassi', '9BD158476N0123456', col2=true) }}
+      {{ field('veiculo_motor',  'N° Motor',  '131A1000000',       col2=true) }}
     </div>
   </div>
 
@@ -117,18 +75,9 @@
       <h2 class="card-title"><span class="section-pill pill-orange">Condições do Contrato</span></h2>
     </div>
     <div class="form-grid">
-      <div class="form-group">
-        <label class="form-label">Início da Locação</label>
-        <input type="text" name="contrato_inicio" class="form-input" placeholder="19/04/2026">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Duração</label>
-        <input type="text" name="contrato_duracao" class="form-input" placeholder="90 dias">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Valor Semanal (R$)</label>
-        <input type="text" name="valor_semanal" class="form-input" placeholder="350,00">
-      </div>
+      {{ field('contrato_inicio',  'Início da Locação', '19/04/2026') }}
+      {{ field('contrato_duracao', 'Duração',           '90 dias') }}
+      {{ field('valor_semanal',    'Valor Semanal (R$)','350,00') }}
     </div>
   </div>
 
@@ -140,62 +89,65 @@
     <div class="form-grid">
       <div class="form-group">
         <label class="form-label">Dia</label>
-        <input type="text" name="data_dia" class="form-input" value="{{ defaults.data_dia }}">
+        <input type="text" name="data_dia" class="form-input"
+               value="{{ contrato.data_dia if contrato and contrato.data_dia else defaults.data_dia }}">
       </div>
       <div class="form-group">
         <label class="form-label">Mês (por extenso)</label>
-        <input type="text" name="data_mes" class="form-input" value="{{ defaults.data_mes }}">
+        <input type="text" name="data_mes" class="form-input"
+               value="{{ contrato.data_mes if contrato and contrato.data_mes else defaults.data_mes }}">
       </div>
       <div class="form-group">
         <label class="form-label">Ano</label>
-        <input type="text" name="data_ano" class="form-input" value="{{ defaults.data_ano }}">
+        <input type="text" name="data_ano" class="form-input"
+               value="{{ contrato.data_ano if contrato and contrato.data_ano else defaults.data_ano }}">
       </div>
 
-      <div class="form-group col-2" style="margin-top:0.5rem">
-        <label class="form-label">Testemunha 1 — Nome</label>
-        <input type="text" name="testemunha1_nome" class="form-input" placeholder="Nome completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Testemunha 1 — RG</label>
-        <input type="text" name="testemunha1_rg" class="form-input" placeholder="0.000.000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Testemunha 1 — CPF</label>
-        <input type="text" name="testemunha1_cpf" class="form-input" placeholder="000.000.000-00">
-      </div>
-
-      <div class="form-group col-2">
-        <label class="form-label">Testemunha 2 — Nome</label>
-        <input type="text" name="testemunha2_nome" class="form-input" placeholder="Nome completo">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Testemunha 2 — RG</label>
-        <input type="text" name="testemunha2_rg" class="form-input" placeholder="0.000.000">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Testemunha 2 — CPF</label>
-        <input type="text" name="testemunha2_cpf" class="form-input" placeholder="000.000.000-00">
-      </div>
+      {{ field('testemunha1_nome', 'Testemunha 1 — Nome', 'Nome completo', col2=true) }}
+      {{ field('testemunha1_rg',   'Testemunha 1 — RG',   '0.000.000') }}
+      {{ field('testemunha1_cpf',  'Testemunha 1 — CPF',  '000.000.000-00') }}
+      {{ field('testemunha2_nome', 'Testemunha 2 — Nome', 'Nome completo', col2=true) }}
+      {{ field('testemunha2_rg',   'Testemunha 2 — RG',   '0.000.000') }}
+      {{ field('testemunha2_cpf',  'Testemunha 2 — CPF',  '000.000.000-00') }}
     </div>
   </div>
 
   <!-- ── Ações ── -->
   <div class="form-actions">
-    <button type="submit" name="formato" value="docx" class="btn btn-primary btn-lg">
+    <button type="button" class="btn btn-primary btn-lg" id="btn-salvar-contrato"
+            onclick="salvarContrato()">
       <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-        <polyline points="10 9 9 9 8 9"/></svg>
-      Gerar DOCX
-    </button>
-    <button type="submit" name="formato" value="pdf" class="btn btn-secondary btn-lg">
-      <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-           viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/></svg>
-      Gerar PDF
+           viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+        <polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      {{ 'Salvar Edição' if contrato else 'Salvar' }}
     </button>
   </div>
-
 </form>
+
+<script>
+async function salvarContrato() {
+  const btn  = document.getElementById('btn-salvar-contrato');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<svg class="spin" width="18" height="18" fill="none" stroke="currentColor"
+    stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Salvando...`;
+
+  try {
+    const fd = new FormData(document.getElementById('form-contrato-locacao'));
+    const resp = await fetch('{{ url_for("gerar_contrato_locacao_route") }}', {
+      method: 'POST', body: fd,
+    });
+    let data;
+    try { data = await resp.json(); }
+    catch { alert('Erro no servidor.'); return; }
+    if (data.error) { alert('Erro: ' + data.error); return; }
+    window.location.href = data.redirect_url || '{{ url_for("historico_contratos") }}';
+  } catch (_) {
+    alert('Erro de conexão. Tente novamente.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+</script>
 {% endblock %}

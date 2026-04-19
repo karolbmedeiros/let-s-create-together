@@ -298,23 +298,47 @@ def gerar_contrato_route():
     except Exception as e:
         return jsonify({"error": f"Erro ao gerar contrato: {e}"}), 500
 
-    # ── Histórico ─────────────────────────────────────────
+    # ── Histórico local ───────────────────────────────────
     meta_path = UPLOAD_FOLDER / f"{template_path.stem}.json"
     nome_template = template_filename
     if meta_path.exists():
-        nome_template = json.loads(meta_path.read_text(encoding="utf-8")).get("nome", template_filename)
+        try:
+            nome_template = json.loads(meta_path.read_text(encoding="utf-8")).get("nome", template_filename)
+        except Exception:
+            pass
+    try:
+        historico = get_historico()
+        historico.append({
+            "id": uuid.uuid4().hex,
+            "locatario_nome": nome_pessoa,
+            "data_hora": datetime.now(_BRT).strftime("%d/%m/%Y %H:%M"),
+            "template": nome_template,
+            "arquivo": nome_saida,
+        })
+        save_historico(historico)
+    except Exception:
+        pass
 
-    historico = get_historico()
-    historico.append({
-        "id": uuid.uuid4().hex,
-        "locatario_nome": nome_pessoa,
-        "data_hora": datetime.now().strftime("%d/%m/%Y %H:%M"),
-        "template": nome_template,
-        "arquivo": nome_saida,
-    })
-    save_historico(historico)
+    # ── Locação → Supabase + redireciona para histórico ───
+    if tipo == "locacao":
+        _campos_loc = [
+            "locatario_nome", "locatario_rg", "locatario_cpf",
+            "locatario_endereco", "locatario_cep", "locatario_telefone",
+            "avalista_nome", "avalista_cpf", "avalista_endereco", "avalista_telefone",
+            "veiculo_descricao", "veiculo_marca", "veiculo_modelo", "veiculo_ano",
+            "veiculo_motor", "veiculo_chassi", "veiculo_cor", "veiculo_placa",
+            "contrato_inicio", "contrato_duracao", "valor_semanal",
+            "data_dia", "data_mes", "data_ano",
+            "testemunha1_nome", "testemunha1_rg", "testemunha1_cpf",
+            "testemunha2_nome", "testemunha2_rg", "testemunha2_cpf",
+        ]
+        _storage_path = f"contratos/{nome_saida}"
+        _insert_loc = {c: request.form.get(c, "") for c in _campos_loc}
+        _insert_loc["arquivo_path"] = _storage_path
+        _salvar_contrato_locacao(_insert_loc, caminho_saida, _storage_path)
+        return jsonify({"redirect_url": url_for("historico_contratos")})
 
-    # ── PDF ──────────────────────────────────────────────
+    # ── Outros tipos → download direto ────────────────────
     if formato == "pdf":
         nome_pdf    = nome_saida.replace(".docx", ".pdf")
         caminho_pdf = str(CONTRATOS_FOLDER / nome_pdf)
@@ -334,7 +358,6 @@ def gerar_contrato_route():
                 "docx_url": docx_url,
             }), 422
 
-    # ── DOCX ─────────────────────────────────────────────
     return send_file(
         caminho_saida,
         as_attachment=True,
@@ -500,9 +523,58 @@ def exportar_historico_excel():
     )
 
 
-# ── Contrato de Locação 2026 ─────────────────────────────────────────────────
+# ── Contrato de Locação — helpers e rotas ────────────────────────────────────
 
 CONTRATO_LOCACAO_TEMPLATE = DOCX_TEMPLATES / "CONTRATO DE LOCAÇÃO EDITADO.docx"
+
+
+def _salvar_contrato_locacao(insert: dict, caminho_docx: str, storage_path: str, edit_id: str = None):
+    """INSERT no Supabase (main thread) + upload do arquivo (background)."""
+    import threading, traceback as _tb
+    sb = _supabase()
+    if not sb:
+        return
+    try:
+        sb.table("contratos_locacao").insert(insert).execute()
+    except Exception:
+        _tb.print_exc()
+    if edit_id:
+        try:
+            old = sb.table("contratos_locacao").select("arquivo_path").eq("id", edit_id).single().execute()
+            _old_path = (old.data or {}).get("arquivo_path")
+            sb.table("contratos_locacao").delete().eq("id", edit_id).execute()
+        except Exception:
+            _old_path = None
+            _tb.print_exc()
+    else:
+        _old_path = None
+
+    _docx_bytes = Path(caminho_docx).read_bytes()
+    _sp = storage_path
+    _op = _old_path
+
+    def _bg():
+        try:
+            sb2 = _supabase()
+            if not sb2:
+                return
+            try:
+                sb2.storage.from_("documentos").upload(
+                    _sp, _docx_bytes,
+                    {"content-type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                     "upsert": "true"},
+                )
+            except Exception:
+                _tb.print_exc()
+            if _op and _op != _sp:
+                try:
+                    sb2.storage.from_("documentos").remove([_op])
+                except Exception:
+                    pass
+        except Exception:
+            _tb.print_exc()
+
+    threading.Thread(target=_bg, daemon=True).start()
 
 _MESES_PT = ["janeiro","fevereiro","março","abril","maio","junho",
              "julho","agosto","setembro","outubro","novembro","dezembro"]
@@ -521,9 +593,9 @@ def pagina_contrato_locacao():
 
 @app.route("/contrato-locacao/gerar", methods=["POST"])
 def gerar_contrato_locacao_route():
+    """Usado pelo fluxo de edição a partir de historico_contratos."""
     if not CONTRATO_LOCACAO_TEMPLATE.exists():
-        flash("Template não encontrado em docx_templates/.", "erro")
-        return redirect(url_for("pagina_contrato_locacao"))
+        return jsonify({"error": "Template não encontrado em docx_templates/."}), 404
 
     campos = [
         "locatario_nome", "locatario_rg", "locatario_cpf",
@@ -537,46 +609,111 @@ def gerar_contrato_locacao_route():
         "testemunha2_nome", "testemunha2_rg", "testemunha2_cpf",
     ]
     dados   = {c: request.form.get(c, "") for c in campos}
-    formato = request.form.get("formato", "docx")
+    edit_id = request.form.get("edit_id", "").strip()
 
-    placa_slug = _slugify(dados.get("veiculo_placa") or "PLACA")
-    nome_slug  = _slugify((dados.get("locatario_nome") or "LOCATARIO").split()[0])
-    data_slug  = datetime.now(_BRT).strftime("%d.%m.%Y")
-    nome_docx  = f"CONTRATO_LOCACAO_{placa_slug}_{nome_slug}_{data_slug}.docx"
+    placa_slug    = _slugify(dados.get("veiculo_placa") or "PLACA")
+    nome_slug     = _slugify((dados.get("locatario_nome") or "LOCATARIO").split()[0])
+    data_slug     = datetime.now(_BRT).strftime("%d.%m.%Y")
+    nome_docx     = f"CONTRATO_LOCACAO_{placa_slug}_{nome_slug}_{data_slug}.docx"
     caminho_saida = str(CONTRATOS_FOLDER / nome_docx)
 
     try:
         gerar_docx(dados, caminho_saida, template_path=str(CONTRATO_LOCACAO_TEMPLATE))
     except Exception as e:
         import traceback; traceback.print_exc()
-        flash(f"Erro ao gerar contrato: {e}", "erro")
-        return redirect(url_for("pagina_contrato_locacao"))
+        return jsonify({"error": f"Erro ao gerar contrato: {e}"}), 500
 
-    try:
-        historico = get_historico()
-        historico.append({
-            "id": uuid.uuid4().hex,
-            "locatario_nome": dados["locatario_nome"],
-            "data_hora": datetime.now(_BRT).strftime("%d/%m/%Y %H:%M"),
-            "template": "Contrato de Locação 2026",
-            "arquivo": nome_docx,
-        })
-        save_historico(historico)
-    except Exception:
-        pass
+    _storage_path = f"contratos/{nome_docx}"
+    _insert = {**dados, "arquivo_path": _storage_path}
+    _salvar_contrato_locacao(_insert, caminho_saida, _storage_path, edit_id=edit_id or None)
 
-    if formato == "pdf":
-        nome_pdf    = nome_docx.replace(".docx", ".pdf")
-        caminho_pdf = str(CONTRATOS_FOLDER / nome_pdf)
+    return jsonify({"redirect_url": url_for("historico_contratos")})
+
+
+@app.route("/historico/contratos")
+def historico_contratos():
+    sb = _supabase()
+    contratos = []
+    erro = None
+    if sb:
         try:
-            _converter_pdf(caminho_saida, caminho_pdf)
-            return send_file(caminho_pdf, as_attachment=True, download_name=nome_pdf,
-                             mimetype="application/pdf")
+            res = sb.table("contratos_locacao").select(
+                "id, locatario_nome, locatario_cpf, veiculo_placa, veiculo_marca, "
+                "veiculo_modelo, contrato_inicio, valor_semanal, arquivo_path, criado_em"
+            ).order("criado_em", desc=True).execute()
+            contratos = res.data or []
         except Exception as e:
-            flash(f"PDF falhou ({e}), baixando DOCX.", "aviso")
+            erro = str(e)
+    else:
+        erro = "Supabase não configurado."
+    return render_template("historico_contratos.html", contratos=contratos, erro=erro,
+                           active="hist_contratos")
 
-    return send_file(caminho_saida, as_attachment=True, download_name=nome_docx,
-                     mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+@app.route("/historico/contratos/download/<contrato_id>")
+def download_contrato_locacao_docx(contrato_id):
+    sb = _supabase()
+    if not sb:
+        abort(503)
+    try:
+        res = sb.table("contratos_locacao").select("arquivo_path").eq("id", contrato_id).single().execute()
+        path = res.data["arquivo_path"]
+        signed = sb.storage.from_("documentos").create_signed_url(path, 60)
+        return redirect(signed["signedURL"])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/historico/contratos/download/<contrato_id>/pdf")
+def download_contrato_locacao_pdf(contrato_id):
+    sb = _supabase()
+    if not sb:
+        abort(503)
+    try:
+        res = sb.table("contratos_locacao").select("arquivo_path").eq("id", contrato_id).single().execute()
+        docx_path = res.data["arquivo_path"]
+        docx_bytes = sb.storage.from_("documentos").download(docx_path)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    tmp_docx = TEMP_FOLDER / f"{uuid.uuid4().hex}.docx"
+    tmp_pdf  = tmp_docx.with_suffix(".pdf")
+    try:
+        tmp_docx.write_bytes(docx_bytes)
+        _converter_pdf(str(tmp_docx), str(tmp_pdf))
+        pdf_bytes = tmp_pdf.read_bytes()
+    except Exception as e:
+        return jsonify({"error": f"Erro ao gerar PDF: {e}"}), 422
+    finally:
+        tmp_docx.unlink(missing_ok=True)
+        tmp_pdf.unlink(missing_ok=True)
+
+    nome_pdf = Path(docx_path).stem + ".pdf"
+    return send_file(BytesIO(pdf_bytes), as_attachment=True,
+                     download_name=nome_pdf, mimetype="application/pdf")
+
+
+@app.route("/historico/contratos/<contrato_id>/editar")
+def editar_contrato_locacao(contrato_id):
+    sb = _supabase()
+    if not sb:
+        flash("Supabase não configurado.", "erro")
+        return redirect(url_for("historico_contratos"))
+    try:
+        res = sb.table("contratos_locacao").select("*").eq("id", contrato_id).single().execute()
+        contrato = res.data
+    except Exception as e:
+        flash(f"Erro ao buscar contrato: {e}", "erro")
+        return redirect(url_for("historico_contratos"))
+    agora = datetime.now(_BRT)
+    defaults = {
+        "data_dia": contrato.get("data_dia") or agora.strftime("%d"),
+        "data_mes": contrato.get("data_mes") or _MESES_PT[agora.month - 1],
+        "data_ano": contrato.get("data_ano") or agora.strftime("%Y"),
+    }
+    return render_template("contrato_locacao.html", contrato=contrato,
+                           edit_id=contrato_id, defaults=defaults,
+                           active="hist_contratos")
 
 
 # ── Vistoria de Entrega ───────────────────────────────────────────────────────

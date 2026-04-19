@@ -684,6 +684,7 @@ async function submeterFormato(formato) {
 
     if (ct.includes('application/json')) {
       const data = await resp.json();
+      if (data.redirect_url) { window.location.href = data.redirect_url; return; }
       mostrarErro(data.error, data.docx_url);
       return;
     }
