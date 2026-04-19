@@ -32,7 +32,7 @@ def handle_any_error(e):
 
 # ── Autenticação ──────────────────────────────────────────────────────────────
 
-_ROTAS_PUBLICAS = {"login", "static"}
+_ROTAS_PUBLICAS = {"login", "static", "admin_novo_usuario"}
 
 @app.before_request
 def verificar_login():
