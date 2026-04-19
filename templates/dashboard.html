@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — ATIVUZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sidebar-w: 220px;
+      --bg: #f0f2f7;
+      --white: #ffffff;
+      --blue: #4361ee;
+      --blue-light: #eef0fd;
+      --text: #1e293b;
+      --muted: #64748b;
+      --label: #94a3b8;
+      --border: #e2e8f0;
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      z-index: 100;
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: var(--blue);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-weight: 700; font-size: 0.95rem; letter-spacing: -0.5px;
+      flex-shrink: 0;
+    }
+
+    .logo-text { line-height: 1.2; }
+    .logo-name { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .logo-sub  { font-size: 0.68rem; color: var(--muted); }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--label);
+      padding: 10px 8px 6px;
+      margin-top: 6px;
+    }
+
+    .nav-section-empty {
+      font-size: 0.75rem;
+      color: var(--label);
+      padding: 6px 8px 10px;
+      font-style: italic;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-item:hover {
+      background: var(--blue-light);
+      color: var(--blue);
+    }
+
+    .nav-item.active {
+      background: var(--blue);
+      color: #fff;
+    }
+
+    .nav-item svg { flex-shrink: 0; opacity: 0.8; }
+    .nav-item.active svg { opacity: 1; }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 0;
+    }
+
+    /* ── Main ── */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 6px; }
+    .breadcrumb-home { font-size: 0.82rem; color: var(--muted); text-decoration: none; }
+    .breadcrumb-sep  { font-size: 0.82rem; color: var(--label); }
+    .breadcrumb-cur  { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+
+    .header-right { display: flex; align-items: center; gap: 14px; }
+
+    .date-badge {
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--blue);
+      color: #fff; font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Content ── */
+    .content {
+      padding: 24px 28px;
+      flex: 1;
+    }
+
+    .page-heading { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── Stat Cards ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      border-radius: var(--radius);
+      padding: 20px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      top: -20px; right: -20px;
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+    }
+
+    .card-blue   { background: linear-gradient(135deg, #4361ee 0%, #7209b7 100%); }
+    .card-teal   { background: linear-gradient(135deg, #0096c7 0%, #48cae4 100%); }
+    .card-purple { background: linear-gradient(135deg, #7209b7 0%, #b5179e 100%); }
+    .card-coral  { background: linear-gradient(135deg, #f72585 0%, #ff6b6b 100%); }
+
+    .card-label { font-size: 0.72rem; font-weight: 500; opacity: 0.88; letter-spacing: 0.02em; }
+    .card-sub   { font-size: 0.68rem; opacity: 0.72; margin-top: 2px; }
+
+    .card-bottom { display: flex; align-items: center; justify-content: space-between; }
+    .card-value  { font-size: 2rem; font-weight: 700; line-height: 1; }
+
+    .card-icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Middle row ── */
+    .middle-row {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .panel-title { font-size: 0.92rem; font-weight: 700; }
+
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      display: inline-block; margin-right: 4px;
+    }
+
+    .period-select {
+      font-size: 0.72rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: var(--muted);
+      background: var(--white);
+      cursor: pointer;
+    }
+
+    .chart-wrap { position: relative; height: 200px; }
+
+    /* ── Overview Panel ── */
+    .overview-nums {
+      display: flex;
+      gap: 0;
+      margin-bottom: 20px;
+    }
+
+    .ov-num {
+      flex: 1;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .ov-num:first-child { border-right: 1px solid var(--border); }
+
+    .ov-val  { font-size: 1.8rem; font-weight: 700; color: var(--text); }
+    .ov-lbl  { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+    .progress-list { display: flex; flex-direction: column; gap: 14px; }
+
+    .progress-item {}
+
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      margin-bottom: 5px;
+    }
+
+    .progress-name { font-weight: 500; }
+    .progress-val  { color: var(--muted); }
+
+    .progress-bar {
+      height: 5px;
+      border-radius: 99px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 99px;
+    }
+
+    .fill-orange { background: #f97316; }
+    .fill-purple { background: #7c3aed; }
+    .fill-blue   { background: #0ea5e9; }
+
+    /* ── Activity Table ── */
+    .table-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .btn-circle {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: var(--blue);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .table-actions { display: flex; gap: 8px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+
+    thead th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody td {
+      padding: 11px 12px;
+      border-bottom: 1px solid #f8fafc;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafbff; }
+
+    .badge-placa {
+      background: #1e3a5f;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    .badge-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 0.68rem;
+      font-weight: 600;
+    }
+
+    .badge-ativo    { background: #dcfce7; color: #16a34a; }
+    .badge-pendente { background: #fef9c3; color: #ca8a04; }
+    .badge-encerrado{ background: #fee2e2; color: #dc2626; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .middle-row { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 700px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.25s; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .content { padding: 16px; }
+    }
+
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      top: 14px; left: 14px;
+      z-index: 200;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 700px) { .menu-toggle { display: block; } }
+  </style>
+</head>
+<body>
+
+<!-- Mobile toggle -->
+<button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">&#9776;</button>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">AV</div>
+    <div class="logo-text">
+      <div class="logo-name">ATIVUZ</div>
+      <div class="logo-sub">Gestão de Contratos</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+
+    <!-- Menu Principal -->
+    <div class="nav-section-label">Menu Principal</div>
+    <div class="nav-section-empty">Em breve…</div>
+
+    <div class="nav-divider"></div>
+
+    <!-- Documentos -->
+    <a href="{{ url_for('pagina_templates') }}"
+       class="nav-item {% if active == 'templates' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      Templates
+    </a>
+
+    <a href="{{ url_for('pagina_gerar') }}"
+       class="nav-item {% if active == 'gerar' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="16"/>
+        <line x1="8"  y1="12" x2="16" y2="12"/>
+      </svg>
+      Gerar Contratos
+    </a>
+
+    <a href="{{ url_for('pagina_contrato_locacao') }}"
+       class="nav-item {% if active == 'contrato_locacao' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+      </svg>
+      Contrato Locação
+    </a>
+
+    <a href="{{ url_for('historico_contratos') }}"
+       class="nav-item {% if active == 'hist_contratos' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Hist. Contratos
+    </a>
+
+    <a href="{{ url_for('pagina_vistoria') }}"
+       class="nav-item {% if active == 'vistoria' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+      Vistoria
+    </a>
+
+    <a href="{{ url_for('historico_vistorias') }}"
+       class="nav-item {% if active == 'hist_vistorias' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M9 12l2 2 4-4"/>
+        <line x1="3" y1="9" x2="21" y2="9"/>
+      </svg>
+      Hist. Vistorias
+    </a>
+
+    <a href="{{ url_for('pagina_historico') }}"
+       class="nav-item {% if active == 'historico' %}active{% endif %}">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Histórico
+    </a>
+
+  </nav>
+</aside>
+
+<!-- ── Main ── -->
+<div class="main">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <a href="#" class="breadcrumb-home">Home</a>
+      <span class="breadcrumb-sep">›</span>
+      <span class="breadcrumb-cur">Dashboard</span>
+    </div>
+    <div class="header-right">
+      <span class="date-badge" id="date-badge"></span>
+      <div class="avatar">AV</div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="page-heading">Dashboard</div>
+
+    <!-- ── Stat Cards ── -->
+    <div class="cards-grid">
+
+      <div class="stat-card card-blue">
+        <div>
+          <div class="card-label">Contratos Ativos</div>
+          <div class="card-sub">Mês atual</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-value">{{ total_contratos or 0 }}</div>
+          <div class="card-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-teal">
+        <div>
+          <div class="card-label">Valor Mensal</div>
+          <div class="card-sub">Soma das locações ativas</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-value">R$ {{ valor_mensal or '—' }}</div>
+          <div class="card-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="12" y1="1" x2="12" y2="23"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-purple">
+        <div>
+          <div class="card-label">Vistorias</div>
+          <div class="card-sub">Registradas no sistema</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-value">{{ total_vistorias or 0 }}</div>
+          <div class="card-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card card-coral">
+        <div>
+          <div class="card-label">Documentos Gerados</div>
+          <div class="card-sub">Total no histórico</div>
+        </div>
+        <div class="card-bottom">
+          <div class="card-value">{{ total_docs or 0 }}</div>
+          <div class="card-icon">
+            <svg width="18" height="18" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Middle Row ── -->
+    <div class="middle-row">
+
+      <!-- Chart -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Atividade Geral</div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div class="legend">
+              <span><span class="legend-dot" style="background:#4361ee"></span>Contratos</span>
+              <span><span class="legend-dot" style="background:#7209b7"></span>Vistorias</span>
+              <span><span class="legend-dot" style="background:#48cae4"></span>Docs Gerados</span>
+            </div>
+            <select class="period-select">
+              <option>Este mês</option>
+              <option>Últimos 3 meses</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Overview -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">Visão Geral</div>
+          <svg width="18" height="18" fill="none" stroke="#94a3b8" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/>
+          </svg>
+        </div>
+
+        <div class="overview-nums">
+          <div class="ov-num">
+            <div class="ov-val">{{ total_contratos or 0 }}</div>
+            <div class="ov-lbl">Contratos</div>
+          </div>
+          <div class="ov-num">
+            <div class="ov-val">{{ total_docs or 0 }}</div>
+            <div class="ov-lbl">Documentos</div>
+          </div>
+        </div>
+
+        <div class="progress-list">
+          <div class="progress-item">
+            <div class="progress-row">
+              <span class="progress-name">Locação</span>
+              <span class="progress-val">{{ total_contratos or 0 }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill fill-orange" style="width: 65%"></div>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-row">
+              <span class="progress-name">Vistoria</span>
+              <span class="progress-val">{{ total_vistorias or 0 }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill fill-purple" style="width: 35%"></div>
+            </div>
+          </div>
+          <div class="progress-item">
+            <div class="progress-row">
+              <span class="progress-name">Outros Docs</span>
+              <span class="progress-val">{{ (total_docs or 0)|int - (total_contratos or 0)|int }}</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill fill-blue" style="width: 20%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Activity Table ── -->
+    <div class="panel">
+      <div class="table-header-row">
+        <div class="panel-title">Últimos Contratos</div>
+        <div class="table-actions">
+          <a href="{{ url_for('historico_contratos') }}" class="btn-circle" title="Ver todos"
+             style="font-size:0.65rem; text-decoration:none; font-weight:700;">→</a>
+          <a href="{{ url_for('pagina_contrato_locacao') }}" class="btn-circle" title="Novo contrato"
+             style="text-decoration:none;">+</a>
+        </div>
+      </div>
+
+      {% if contratos %}
+      <table>
+        <thead>
+          <tr>
+            <th>Locatário</th>
+            <th>Placa</th>
+            <th>Veículo</th>
+            <th>Início</th>
+            <th>Valor/sem.</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in contratos %}
+          <tr>
+            <td>{{ c.locatario_nome or '—' }}</td>
+            <td><span class="badge-placa">{{ c.veiculo_placa or '—' }}</span></td>
+            <td>{{ (c.veiculo_marca or '') + ' ' + (c.veiculo_modelo or '') }}</td>
+            <td style="white-space:nowrap">{{ c.contrato_inicio or '—' }}</td>
+            <td>{% if c.valor_semanal %}R$ {{ c.valor_semanal }}{% else %}—{% endif %}</td>
+            <td><span class="badge-status badge-ativo">Ativo</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:2rem 0;">
+        Nenhum contrato registrado ainda.
+      </p>
+      {% endif %}
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  // Date badge
+  const d = new Date();
+  document.getElementById('date-badge').textContent =
+    d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+
+  // Chart
+  const ctx = document.getElementById('activityChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6','Sem 7','Sem 8','Sem 9','Sem 10'],
+      datasets: [
+        {
+          label: 'Contratos',
+          data: [3,5,4,6,5,8,7,9,6,8],
+          borderColor: '#4361ee',
+          backgroundColor: 'rgba(67,97,238,0.08)',
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 3,
+        },
+        {
+          label: 'Vistorias',
+          data: [1,2,3,2,4,3,5,4,6,5],
+          borderColor: '#7209b7',
+          backgroundColor: 'rgba(114,9,183,0.06)',
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 3,
+        },
+        {
+          label: 'Docs Gerados',
+          data: [5,7,6,9,8,11,10,13,11,14],
+          borderColor: '#48cae4',
+          backgroundColor: 'rgba(72,202,228,0.06)',
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: '#fff',
+          titleColor: '#1e293b',
+          bodyColor: '#64748b',
+          borderColor: '#e2e8f0',
+          borderWidth: 1,
+          padding: 10,
+        },
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#94a3b8' },
+        },
+        y: {
+          grid: { color: '#f1f5f9', lineWidth: 1 },
+          ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 5 },
+          min: 0,
+        },
+      },
+    },
+  });
+</script>
+</body>
+</html>

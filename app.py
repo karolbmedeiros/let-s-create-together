@@ -203,6 +203,45 @@ def _gerar_para_caminho(form, tipo, template_path_str, caminho_saida):
 # ── página 1 — Templates ──────────────────────────────────
 
 @app.route("/")
+def dashboard():
+    sb = _supabase()
+    total_contratos = 0
+    total_vistorias = 0
+    total_docs = 0
+    valor_mensal = "—"
+    contratos = []
+    if sb:
+        try:
+            res = sb.table("contratos_locacao").select(
+                "id, locatario_nome, veiculo_placa, veiculo_marca, veiculo_modelo, contrato_inicio, valor_semanal",
+                count="exact"
+            ).order("criado_em", desc=True).limit(5).execute()
+            contratos = res.data or []
+            total_contratos = res.count or len(contratos)
+        except Exception:
+            pass
+        try:
+            rv = sb.table("vistorias").select("id", count="exact").execute()
+            total_vistorias = rv.count or 0
+        except Exception:
+            pass
+    try:
+        hist = get_historico()
+        total_docs = len(hist)
+    except Exception:
+        pass
+    return render_template(
+        "dashboard.html",
+        active="dashboard",
+        total_contratos=total_contratos,
+        total_vistorias=total_vistorias,
+        total_docs=total_docs,
+        valor_mensal=valor_mensal,
+        contratos=contratos,
+    )
+
+
+@app.route("/templates")
 def pagina_templates():
     return render_template("templates.html", templates=get_templates(), active="templates")
 

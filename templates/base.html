@@ -34,7 +34,7 @@
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
              viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/>
           <line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        Gerar Contrato
+        Gerar Contratos
       </a>
       <a href="{{ url_for('pagina_contrato_locacao') }}"
          class="nav-item {% if active == 'contrato_locacao' %}active{% endif %}">
@@ -59,18 +59,18 @@
           <path d="M9 12l2 2 4-4"/></svg>
         Vistoria
       </a>
-      <a href="{{ url_for('pagina_historico') }}"
-         class="nav-item {% if active == 'historico' %}active{% endif %}">
-        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
-             viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Histórico
-      </a>
       <a href="{{ url_for('historico_vistorias') }}"
          class="nav-item {% if active == 'hist_vistorias' %}active{% endif %}">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
              viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/>
           <path d="M9 12l2 2 4-4"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
         Hist. Vistorias
+      </a>
+      <a href="{{ url_for('pagina_historico') }}"
+         class="nav-item {% if active == 'historico' %}active{% endif %}">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"
+             viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Histórico
       </a>
     </nav>
 
