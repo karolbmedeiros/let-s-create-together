@@ -58,8 +58,18 @@
           <line x1="12" y1="8" x2="12" y2="16"/>
           <line x1="8"  y1="12" x2="16" y2="12"/>
         </svg>
-        Gerar Contratos
+        Criar Contratos
       </a>
+
+      <a href="{{ url_for('pagina_historico') }}"
+         class="nav-item {% if active == 'historico' %}active{% endif %}">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Hist. de Contratos
+      </a>
+
+      <div class="nav-divider"></div>
 
       <a href="{{ url_for('pagina_contrato_locacao') }}"
          class="nav-item {% if active == 'contrato_locacao' %}active{% endif %}">
@@ -101,14 +111,6 @@
         Hist. Vistorias
       </a>
 
-      <a href="{{ url_for('pagina_historico') }}"
-         class="nav-item {% if active == 'historico' %}active{% endif %}">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        Histórico
-      </a>
-
     </nav>
 
     <div class="sidebar-footer">v1.0</div>
@@ -125,12 +127,12 @@
         <span class="breadcrumb-cur">
           {% if active == 'dashboard' %}Página Inicial
           {% elif active == 'templates' %}Templates
-          {% elif active == 'gerar' %}Gerar Contratos
+          {% elif active == 'gerar' %}Criar Contratos
           {% elif active == 'contrato_locacao' %}Contrato Locação
           {% elif active == 'hist_contratos' %}Hist. Contratos
           {% elif active == 'vistoria' %}Vistoria
           {% elif active == 'hist_vistorias' %}Hist. Vistorias
-          {% elif active == 'historico' %}Histórico
+          {% elif active == 'historico' %}Histórico de Contratos
           {% else %}ATIVUZ
           {% endif %}
         </span>
