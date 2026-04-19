@@ -500,6 +500,85 @@ def exportar_historico_excel():
     )
 
 
+# ── Contrato de Locação 2026 ─────────────────────────────────────────────────
+
+CONTRATO_LOCACAO_TEMPLATE = DOCX_TEMPLATES / "CONTRATO DE LOCAÇÃO EDITADO.docx"
+
+_MESES_PT = ["janeiro","fevereiro","março","abril","maio","junho",
+             "julho","agosto","setembro","outubro","novembro","dezembro"]
+
+
+@app.route("/contrato-locacao")
+def pagina_contrato_locacao():
+    agora = datetime.now(_BRT)
+    defaults = {
+        "data_dia": agora.strftime("%d"),
+        "data_mes": _MESES_PT[agora.month - 1],
+        "data_ano": agora.strftime("%Y"),
+    }
+    return render_template("contrato_locacao.html", defaults=defaults, active="contrato_locacao")
+
+
+@app.route("/contrato-locacao/gerar", methods=["POST"])
+def gerar_contrato_locacao_route():
+    if not CONTRATO_LOCACAO_TEMPLATE.exists():
+        flash("Template não encontrado em docx_templates/.", "erro")
+        return redirect(url_for("pagina_contrato_locacao"))
+
+    campos = [
+        "locatario_nome", "locatario_rg", "locatario_cpf",
+        "locatario_endereco", "locatario_cep", "locatario_telefone",
+        "avalista_nome", "avalista_cpf", "avalista_endereco", "avalista_telefone",
+        "veiculo_descricao", "veiculo_marca", "veiculo_modelo", "veiculo_ano",
+        "veiculo_motor", "veiculo_chassi", "veiculo_cor", "veiculo_placa",
+        "contrato_inicio", "contrato_duracao", "valor_semanal",
+        "data_dia", "data_mes", "data_ano",
+        "testemunha1_nome", "testemunha1_rg", "testemunha1_cpf",
+        "testemunha2_nome", "testemunha2_rg", "testemunha2_cpf",
+    ]
+    dados   = {c: request.form.get(c, "") for c in campos}
+    formato = request.form.get("formato", "docx")
+
+    placa_slug = _slugify(dados.get("veiculo_placa") or "PLACA")
+    nome_slug  = _slugify((dados.get("locatario_nome") or "LOCATARIO").split()[0])
+    data_slug  = datetime.now(_BRT).strftime("%d.%m.%Y")
+    nome_docx  = f"CONTRATO_LOCACAO_{placa_slug}_{nome_slug}_{data_slug}.docx"
+    caminho_saida = str(CONTRATOS_FOLDER / nome_docx)
+
+    try:
+        gerar_docx(dados, caminho_saida, template_path=str(CONTRATO_LOCACAO_TEMPLATE))
+    except Exception as e:
+        import traceback; traceback.print_exc()
+        flash(f"Erro ao gerar contrato: {e}", "erro")
+        return redirect(url_for("pagina_contrato_locacao"))
+
+    try:
+        historico = get_historico()
+        historico.append({
+            "id": uuid.uuid4().hex,
+            "locatario_nome": dados["locatario_nome"],
+            "data_hora": datetime.now(_BRT).strftime("%d/%m/%Y %H:%M"),
+            "template": "Contrato de Locação 2026",
+            "arquivo": nome_docx,
+        })
+        save_historico(historico)
+    except Exception:
+        pass
+
+    if formato == "pdf":
+        nome_pdf    = nome_docx.replace(".docx", ".pdf")
+        caminho_pdf = str(CONTRATOS_FOLDER / nome_pdf)
+        try:
+            _converter_pdf(caminho_saida, caminho_pdf)
+            return send_file(caminho_pdf, as_attachment=True, download_name=nome_pdf,
+                             mimetype="application/pdf")
+        except Exception as e:
+            flash(f"PDF falhou ({e}), baixando DOCX.", "aviso")
+
+    return send_file(caminho_saida, as_attachment=True, download_name=nome_docx,
+                     mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+
+
 # ── Vistoria de Entrega ───────────────────────────────────────────────────────
 
 VISTORIA_TEMPLATE = DOCX_TEMPLATES / "VISTORIA_TESTE_1.docx"
