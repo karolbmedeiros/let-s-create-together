@@ -726,17 +726,41 @@ def gerar_vistoria_entrega(dados, fotos: list, caminho_saida: str, template_path
 def _join_fragmented_runs(xml: str) -> str:
     """Remove proofErr e une runs consecutivos com mesmo rPr (corrige marcadores fragmentados)."""
     xml = re.sub(r'<w:proofErr\b[^>]*/>', '', xml)
-    pattern = re.compile(
-        r'<w:r>(<w:rPr>.*?</w:rPr>)'
-        r'(<w:t(?:\s[^>]*)?>)(.*?)</w:t></w:r>'
-        r'<w:r>\1\2(.*?)</w:t></w:r>',
+
+    # Localiza cada <w:r>...</w:r> individualmente (O(n), sem backreference).
+    run_re = re.compile(
+        r'<w:r>((?:<w:rPr>.*?</w:rPr>)?)'
+        r'(<w:t(?:[^>]*)?>)(.*?)</w:t></w:r>',
         re.DOTALL,
     )
-    prev = None
-    while prev != xml:
-        prev = xml
-        xml = pattern.sub(r'<w:r>\1\2\3\4</w:t></w:r>', xml)
-    return xml
+
+    out = []
+    pos = 0
+    pr_buf = t_buf = tx_buf = None
+
+    for m in run_re.finditer(xml):
+        pre = xml[pos:m.start()]
+        rpr, top, txt = m.group(1), m.group(2), m.group(3)
+
+        if pre:
+            if pr_buf is not None:
+                out.append(f'<w:r>{pr_buf}{t_buf}{tx_buf}</w:t></w:r>')
+                pr_buf = t_buf = tx_buf = None
+            out.append(pre)
+
+        if pr_buf is not None and rpr == pr_buf:
+            tx_buf += txt
+        else:
+            if pr_buf is not None:
+                out.append(f'<w:r>{pr_buf}{t_buf}{tx_buf}</w:t></w:r>')
+            pr_buf, t_buf, tx_buf = rpr, top, txt
+
+        pos = m.end()
+
+    if pr_buf is not None:
+        out.append(f'<w:r>{pr_buf}{t_buf}{tx_buf}</w:t></w:r>')
+    out.append(xml[pos:])
+    return ''.join(out)
 
 
 def _safe_xml(text: str) -> str:
