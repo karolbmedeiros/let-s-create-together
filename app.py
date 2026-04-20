@@ -224,23 +224,24 @@ def _converter_pdf(caminho_docx: str, caminho_pdf: str):
         finally:
             pythoncom.CoUninitialize()
     else:
-        import tempfile
+        import tempfile, os
         docx_abs  = str(Path(caminho_docx).resolve())
         pdf_abs   = str(Path(caminho_pdf).resolve())
         output_dir = str(Path(pdf_abs).parent)
         if not Path(docx_abs).exists():
             raise FileNotFoundError(f"DOCX não encontrado: {docx_abs!r}")
-        with tempfile.TemporaryDirectory() as profile_dir:
+        with tempfile.TemporaryDirectory() as home_dir:
+            env = {**os.environ, "HOME": home_dir}
             result = subprocess.run(
                 [
                     "libreoffice",
-                    f"-env:UserInstallation=file://{profile_dir}",
                     "--headless", "--norestore", "--nofirststartwizard",
                     "--convert-to", "pdf",
                     "--outdir", output_dir,
                     docx_abs,
                 ],
                 capture_output=True,
+                env=env,
             )
         gerado = Path(output_dir) / (Path(docx_abs).stem + ".pdf")
         if not gerado.exists():
@@ -248,7 +249,7 @@ def _converter_pdf(caminho_docx: str, caminho_pdf: str):
             stdout = result.stdout.decode(errors="replace") if result.stdout else ""
             raise RuntimeError(
                 f"LibreOffice (exit {result.returncode}) não gerou PDF. "
-                f"stderr={stderr!r} stdout={stdout!r}"
+                f"docx={docx_abs!r} stderr={stderr!r} stdout={stdout!r}"
             )
         if gerado.resolve() != Path(pdf_abs).resolve():
             gerado.rename(pdf_abs)
