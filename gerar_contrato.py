@@ -886,7 +886,8 @@ def gerar_vistoria_nova(dados: dict, fotos: list, caminho_saida: str) -> None:
                 xml,
             )
 
-        # Fallback acc_: tenta substituição simples e depois cross-run
+        # Fallback acc_: handles [key] split across 2 or 3 separate runs
+        _ANY_XML = r'(?:(?!<w:t[ >]|</w:t>).)*'  # any XML content, não cruza w:t
         for key, value in dados.items():
             if not key.startswith('acc_'):
                 continue
@@ -894,9 +895,32 @@ def gerar_vistoria_nova(dados: dict, fotos: list, caminho_saida: str) -> None:
             safe_val = _safe_xml(value or '')
             if placeholder in xml:
                 xml = xml.replace(placeholder, safe_val)
-            else:
-                pat = r'(?:<[^>]*>)*'.join(re.escape(c) for c in placeholder)
-                xml = re.sub(pat, safe_val, xml)
+                continue
+            cor = _ACC_CORES.get((value or '').upper(), '333333')
+            novo_run = (
+                f'<w:r><w:rPr><w:b/><w:bCs/>'
+                f'<w:color w:val="{cor}"/>'
+                f'<w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr>'
+                f'<w:t>{_safe_xml(value or "")}</w:t></w:r>'
+            )
+            esc = re.escape(key)
+            # Caso 1: "[" | "key" | "]" em 3 runs distintos
+            pat3 = (r'<w:t[^>]*>\[</w:t></w:r>' + _ANY_XML +
+                    r'<w:t[^>]*>' + esc + r'</w:t></w:r>' + _ANY_XML +
+                    r'<w:t[^>]*>\]</w:t></w:r>')
+            xml, n = re.subn(pat3, novo_run, xml, flags=re.DOTALL)
+            if n:
+                continue
+            # Caso 2: "[key" | "]" em 2 runs
+            pat2a = (r'<w:t[^>]*>\[' + esc + r'</w:t></w:r>' + _ANY_XML +
+                     r'<w:t[^>]*>\]</w:t></w:r>')
+            xml, n = re.subn(pat2a, novo_run, xml, flags=re.DOTALL)
+            if n:
+                continue
+            # Caso 3: "[" | "key]" em 2 runs
+            pat2b = (r'<w:t[^>]*>\[</w:t></w:r>' + _ANY_XML +
+                     r'<w:t[^>]*>' + esc + r'\]</w:t></w:r>')
+            xml = re.sub(pat2b, novo_run, xml, flags=re.DOTALL)
 
         doc_xml_path.write_text(xml, encoding='utf-8')
 
