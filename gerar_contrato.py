@@ -886,10 +886,17 @@ def gerar_vistoria_nova(dados: dict, fotos: list, caminho_saida: str) -> None:
                 xml,
             )
 
-        # Fallback acc_: substituição simples para qualquer marcador que o regex não casou
+        # Fallback acc_: tenta substituição simples e depois cross-run
         for key, value in dados.items():
-            if key.startswith('acc_') and f'[{key}]' in xml:
-                xml = xml.replace(f'[{key}]', _safe_xml(value or ''))
+            if not key.startswith('acc_'):
+                continue
+            placeholder = f'[{key}]'
+            safe_val = _safe_xml(value or '')
+            if placeholder in xml:
+                xml = xml.replace(placeholder, safe_val)
+            else:
+                pat = r'(?:<[^>]*>)*'.join(re.escape(c) for c in placeholder)
+                xml = re.sub(pat, safe_val, xml)
 
         doc_xml_path.write_text(xml, encoding='utf-8')
 
