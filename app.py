@@ -74,6 +74,41 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/api/clientes")
+def api_clientes():
+    import openpyxl
+    path = Path(__file__).parent / "dados_clientes.xlsx"
+    if not path.exists():
+        return jsonify([])
+    wb = openpyxl.load_workbook(str(path), read_only=True, data_only=True)
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    wb.close()
+    if len(rows) < 2:
+        return jsonify([])
+    # Colunas por índice: 0=Cliente,1=CPF,2=Ano,3=Chassi,4=Cor,5=Marca,6=Modelo,7=Placa,8=Endereço,9=Motor,10=Telefone
+    q = request.args.get("q", "").lower().strip()
+    clientes = []
+    for row in rows[1:]:
+        if not row[0]:
+            continue
+        nome = str(row[0] or "")
+        if q and q not in nome.lower():
+            continue
+        clientes.append({
+            "nome":         nome,
+            "telefone":     str(row[10] or ""),
+            "endereco":     str(row[8]  or ""),
+            "veiculo":      f"{row[5] or ''} {row[6] or ''}".strip(),
+            "placa":        str(row[7]  or ""),
+            "cor":          str(row[4]  or ""),
+            "ano":          str(int(row[2])) if row[2] else "",
+            "chassi":       str(row[3]  or ""),
+            "numero_motor": str(row[9]  or ""),
+        })
+    return jsonify(clientes[:30])
+
+
 @app.route("/admin/novo-usuario", methods=["GET", "POST"])
 def admin_novo_usuario():
     token_correto = _os.environ.get("ADMIN_TOKEN", "")

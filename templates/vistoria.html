@@ -42,6 +42,25 @@
 <form action="{{ url_for('gerar_vistoria_route') }}" method="post" enctype="multipart/form-data" id="form-vistoria">
   <input type="hidden" name="edit_id" value="{{ edit_id or '' }}">
 
+  <!-- ── Busca de Cliente ── -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title"><span class="section-pill pill-blue">Buscar Cliente Cadastrado</span></h2>
+    </div>
+    <div class="form-grid">
+      <div class="form-group col-2" style="position:relative;">
+        <label class="form-label">Nome do cliente</label>
+        <input type="text" id="busca-cliente" class="form-input"
+               placeholder="Digite o nome para buscar e selecionar..." autocomplete="off">
+        <div id="busca-dropdown"
+             style="display:none; position:absolute; top:calc(100% - 0.5rem); left:0; right:0;
+                    background:#fff; border:1.5px solid #e2e8f0; border-radius:8px;
+                    box-shadow:0 4px 16px rgba(0,0,0,.1); z-index:200;
+                    max-height:220px; overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Dados do Cliente ── -->
   <div class="card">
     <div class="card-header">
@@ -251,6 +270,61 @@
 </form>
 
 <script>
+// ── Autocomplete de clientes ─────────────────────────────────────────────
+(function() {
+  const busca    = document.getElementById('busca-cliente');
+  const dropdown = document.getElementById('busca-dropdown');
+  let timer;
+
+  busca.addEventListener('input', function() {
+    clearTimeout(timer);
+    const q = this.value.trim();
+    if (q.length < 2) { dropdown.style.display = 'none'; return; }
+    timer = setTimeout(() => buscarClientes(q), 250);
+  });
+
+  busca.addEventListener('blur', function() {
+    setTimeout(() => { dropdown.style.display = 'none'; }, 150);
+  });
+
+  async function buscarClientes(q) {
+    try {
+      const resp = await fetch('/api/clientes?q=' + encodeURIComponent(q));
+      const lista = await resp.json();
+      renderDropdown(lista);
+    } catch(_) { dropdown.style.display = 'none'; }
+  }
+
+  function renderDropdown(lista) {
+    if (!lista.length) { dropdown.style.display = 'none'; return; }
+    dropdown.innerHTML = '';
+    lista.forEach(function(c) {
+      const item = document.createElement('div');
+      item.style.cssText = 'padding:0.55rem 0.9rem; cursor:pointer; font-size:0.85rem; border-bottom:1px solid #f1f5f9; color:#1e293b;';
+      item.innerHTML = '<strong>' + c.nome + '</strong> <span style="color:#64748b;font-size:0.78rem;">— ' + c.placa + '</span>';
+      item.addEventListener('mouseover', function() { this.style.background = '#f0f4ff'; });
+      item.addEventListener('mouseout',  function() { this.style.background = ''; });
+      item.onmousedown = function() { preencherFormulario(c); };
+      dropdown.appendChild(item);
+    });
+    dropdown.style.display = 'block';
+  }
+
+  function preencherFormulario(c) {
+    dropdown.style.display = 'none';
+    busca.value = c.nome;
+    document.getElementById('cliente_nome').value      = c.nome;
+    document.getElementById('cliente_telefone').value  = c.telefone;
+    document.getElementById('cliente_endereco').value  = c.endereco;
+    document.getElementById('veiculo').value           = c.veiculo;
+    document.getElementById('placa').value             = c.placa;
+    document.getElementById('cor').value               = c.cor;
+    document.getElementById('ano').value               = c.ano;
+    document.getElementById('chassi').value            = c.chassi;
+    document.getElementById('numero_motor').value      = c.numero_motor;
+  }
+})();
+
 function setSNA(btn, campo, valor) {
   const toggle = btn.closest('.sna-toggle');
   toggle.querySelectorAll('.sna-btn').forEach(b => b.classList.remove('sna-sel'));
