@@ -883,12 +883,16 @@ def gerar_vistoria_nova(dados: dict, fotos: list, caminho_saida: str) -> None:
 
         fotos = [f for f in (fotos or []) if f]
         if fotos:
+            (tmp / "word" / "media").mkdir(parents=True, exist_ok=True)
             rels_path = tmp / "word" / "_rels" / "document.xml.rels"
             rels = rels_path.read_text(encoding='utf-8')
             drawings = []
 
+            existing_ids = set(int(m) for m in re.findall(r'Id="rId(\d+)"', rels))
+            next_rid = max(existing_ids, default=10) + 1
+
             for i, foto_path in enumerate(fotos):
-                r_id = f"rId{11 + i}"
+                r_id = f"rId{next_rid + i}"
                 pic_id = 100 + i
                 ext = Path(foto_path).suffix.lower()
                 media_name = f"foto_upload_{i}{ext}"

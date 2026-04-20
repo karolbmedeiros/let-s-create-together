@@ -275,23 +275,22 @@ function setSNA(btn, campo, valor) {
 {% endif %}
 
 // ── Acumulador de fotos do veículo ───────────────────────────────────────
+let _fotosVeiculoDT = new DataTransfer();
+
 (function() {
   const input = document.getElementById('fotos_veiculo');
   const lista = document.getElementById('fotos-lista');
-  let dt = new DataTransfer();
 
   input.addEventListener('change', function() {
     for (const file of this.files) {
-      dt.items.add(file);
+      _fotosVeiculoDT.items.add(file);
     }
-    input.files = dt.files;
     renderLista();
-    this.value = '';
   });
 
-  function renderLista() {
+  window._renderFotosLista = function renderLista() {
     lista.innerHTML = '';
-    Array.from(dt.files).forEach((file, idx) => {
+    Array.from(_fotosVeiculoDT.files).forEach((file, idx) => {
       const wrap = document.createElement('div');
       wrap.style.cssText = 'position:relative; display:inline-block;';
 
@@ -306,9 +305,8 @@ function setSNA(btn, campo, valor) {
       btn.style.cssText = 'position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#dc2626; color:#fff; border:none; cursor:pointer; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center;';
       btn.onclick = function() {
         const newDt = new DataTransfer();
-        Array.from(dt.files).forEach((f, i) => { if (i !== idx) newDt.items.add(f); });
-        dt = newDt;
-        input.files = dt.files;
+        Array.from(_fotosVeiculoDT.files).forEach((f, i) => { if (i !== idx) newDt.items.add(f); });
+        _fotosVeiculoDT = newDt;
         renderLista();
       };
 
@@ -316,7 +314,7 @@ function setSNA(btn, campo, valor) {
       wrap.appendChild(btn);
       lista.appendChild(wrap);
     });
-  }
+  };
 })();
 
 async function salvarVistoria() {
@@ -332,6 +330,10 @@ async function salvarVistoria() {
 
   try {
     const fd = new FormData(form);
+    fd.delete('fotos_veiculo');
+    for (const file of _fotosVeiculoDT.files) {
+      fd.append('fotos_veiculo', file);
+    }
     fd.set('formato', 'docx');
     const resp = await fetch('{{ url_for("gerar_vistoria_route") }}', {
       method: 'POST',
