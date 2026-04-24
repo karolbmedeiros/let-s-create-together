@@ -4,348 +4,205 @@
 {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  /* ── Stat Cards ── */
-  .cards-grid {
+  .dash-2col {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 20px;
+    grid-template-columns: 1fr 280px;
+    gap: var(--d-gap);
   }
+  .dash-chart-wrap { height: 210px; position: relative; }
 
-  .stat-card {
-    border-radius: 14px;
-    padding: 18px 20px;
-    color: #fff;
-    position: relative;
-    overflow: hidden;
-    min-height: 115px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .stat-card::after {
-    content: '';
-    position: absolute;
-    top: -18px; right: -18px;
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.12);
-  }
-
-  .card-blue   { background: linear-gradient(135deg, #4361ee 0%, #7209b7 100%); }
-  .card-teal   { background: linear-gradient(135deg, #0096c7 0%, #48cae4 100%); }
-  .card-purple { background: linear-gradient(135deg, #7209b7 0%, #b5179e 100%); }
-  .card-coral  { background: linear-gradient(135deg, #f72585 0%, #ff6b6b 100%); }
-
-  .card-label  { font-size: 0.72rem; font-weight: 500; opacity: 0.88; }
-  .card-sub    { font-size: 0.67rem; opacity: 0.72; margin-top: 2px; }
-  .card-bottom { display: flex; align-items: flex-end; justify-content: space-between; }
-  .card-value  { font-size: 1.9rem; font-weight: 700; line-height: 1; }
-
-  .card-icon {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.2);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
-  /* ── Middle row ── */
-  .middle-row {
+  .ov-grid {
     display: grid;
-    grid-template-columns: 1fr 300px;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .panel {
-    background: #fff;
-    border-radius: 14px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-  }
-
-  .panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-
-  .panel-title { font-size: 0.9rem; font-weight: 700; }
-
-  .legend {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-  }
-
-  .legend-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 3px;
-  }
-
-  .period-select {
-    font-size: 0.7rem;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 3px 8px;
-    color: var(--text-muted);
-    background: #fff;
-  }
-
-  .chart-wrap { position: relative; height: 195px; }
-
-  /* ── Overview ── */
-  .overview-nums {
-    display: flex;
-    margin-bottom: 18px;
-    border: 1px solid var(--border);
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border: 1px solid var(--line);
     border-radius: 10px;
     overflow: hidden;
+    margin-bottom: 16px;
   }
-
-  .ov-num {
-    flex: 1;
+  .ov-cell {
     text-align: center;
-    padding: 12px 0;
+    padding: 14px 8px;
   }
+  .ov-cell + .ov-cell { border-left: 1px solid var(--line); }
+  .ov-val { font-size: 1.6rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1; }
+  .ov-lbl { font-size: 11.5px; color: var(--ink-3); margin-top: 4px; }
 
-  .ov-num:first-child { border-right: 1px solid var(--border); }
-  .ov-val { font-size: 1.7rem; font-weight: 700; color: var(--text); }
-  .ov-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+  .progress-list { display: flex; flex-direction: column; gap: 14px; }
+  .progress-row { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 6px; }
+  .progress-name { font-weight: 500; color: var(--ink-2); }
+  .progress-val  { color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
-  .progress-list { display: flex; flex-direction: column; gap: 13px; }
-
-  .progress-row {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.76rem;
-    margin-bottom: 4px;
-  }
-
-  .progress-name { font-weight: 500; }
-  .progress-val  { color: var(--text-muted); }
-
-  .progress-bar {
-    height: 5px;
-    border-radius: 99px;
-    background: var(--border);
-    overflow: hidden;
-  }
-
-  .progress-fill { height: 100%; border-radius: 99px; }
-  .fill-orange { background: #f97316; }
-  .fill-purple { background: #7c3aed; }
-  .fill-blue   { background: #0ea5e9; }
-
-  /* ── Activity table ── */
-  .table-header-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-
-  .btn-circle {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary);
-    color: #fff;
-    font-size: 0.95rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    text-decoration: none;
-    font-weight: 700;
-    transition: opacity .15s;
-  }
-
-  .btn-circle:hover { opacity: 0.85; }
-  .table-actions { display: flex; gap: 6px; }
-
-  .dash-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-
+  /* Recent contracts table */
+  .dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .dash-table thead th {
     text-align: left;
-    padding: 7px 10px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--ink-3);
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
   }
-
   .dash-table tbody td {
-    padding: 10px 10px;
-    border-bottom: 1px solid #f8fafc;
-    color: var(--text);
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
     vertical-align: middle;
   }
-
   .dash-table tbody tr:last-child td { border-bottom: none; }
-  .dash-table tbody tr:hover td { background: #fafbff; }
+  .dash-table tbody tr:hover td { background: var(--surface-2); }
 
   .badge-placa {
-    background: #1e3a5f;
+    background: var(--brand-ink);
     color: #fff;
-    font-size: 0.67rem;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    padding: 2px 6px;
-    border-radius: 4px;
+    letter-spacing: .08em;
+    padding: 3px 7px;
+    border-radius: 5px;
+    font-variant-numeric: tabular-nums;
   }
+  .badge-ativo { background: var(--success-soft); color: var(--success); }
 
-  .badge-status {
-    display: inline-block;
-    padding: 2px 7px;
-    border-radius: 99px;
-    font-size: 0.67rem;
-    font-weight: 600;
-  }
-
-  .badge-ativo { background: #dcfce7; color: #16a34a; }
-
-  /* ── Responsive ── */
-  @media (max-width: 1100px) {
-    .middle-row { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 900px) {
-    .cards-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  @media (max-width: 600px) {
-    .cards-grid { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 1100px) { .dash-2col { grid-template-columns: 1fr; } }
+  @media (max-width: 700px)  { .kpi-grid { grid-template-columns: 1fr 1fr; } }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- ── Stat Cards ── -->
-<div class="cards-grid">
+<!-- Page header -->
+<div class="page-head">
+  <div>
+    <h1>Página Inicial</h1>
+    <p class="sub">Resumo operacional da frota.</p>
+  </div>
+  <div class="head-actions">
+    <a href="{{ url_for('pagina_contrato_locacao') }}" class="btn btn-primary">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Novo contrato
+    </a>
+  </div>
+</div>
 
-  <div class="stat-card card-blue">
-    <div>
-      <div class="card-label">Contratos de Locação</div>
-      <div class="card-sub">Total registrado</div>
-    </div>
-    <div class="card-bottom">
-      <div class="card-value">{{ total_contratos or 0 }}</div>
-      <div class="card-icon">
-        <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+<!-- KPI cards -->
+<div class="kpi-grid">
+
+  <div class="kpi">
+    <div class="kpi-top">
+      <div class="kpi-icon orange" aria-hidden="true">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
           <polyline points="14 2 14 8 20 8"/>
         </svg>
       </div>
     </div>
+    <div>
+      <div class="kpi-label">Contratos de Locação</div>
+      <div class="kpi-value">{{ total_contratos or 0 }}</div>
+      <div class="kpi-trend">Total registrado</div>
+    </div>
   </div>
 
-  <div class="stat-card card-teal">
-    <div>
-      <div class="card-label">Valor Mensal</div>
-      <div class="card-sub">Soma das locações</div>
-    </div>
-    <div class="card-bottom">
-      <div class="card-value" style="font-size:1.4rem;">R$ {{ valor_mensal or '—' }}</div>
-      <div class="card-icon">
-        <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+  <div class="kpi">
+    <div class="kpi-top">
+      <div class="kpi-icon success" aria-hidden="true">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <line x1="12" y1="1" x2="12" y2="23"/>
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
         </svg>
       </div>
     </div>
+    <div>
+      <div class="kpi-label">Receita Mensal</div>
+      <div class="kpi-value" style="font-size:1.4rem;">{% if valor_mensal %}R$ {{ valor_mensal }}{% else %}—{% endif %}</div>
+      <div class="kpi-trend">Soma das locações</div>
+    </div>
   </div>
 
-  <div class="stat-card card-purple">
-    <div>
-      <div class="card-label">Vistorias</div>
-      <div class="card-sub">Registradas no sistema</div>
-    </div>
-    <div class="card-bottom">
-      <div class="card-value">{{ total_vistorias or 0 }}</div>
-      <div class="card-icon">
-        <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+  <div class="kpi">
+    <div class="kpi-top">
+      <div class="kpi-icon info" aria-hidden="true">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <rect x="3" y="3" width="18" height="18" rx="2"/>
           <path d="M9 12l2 2 4-4"/>
         </svg>
       </div>
     </div>
+    <div>
+      <div class="kpi-label">Vistorias</div>
+      <div class="kpi-value">{{ total_vistorias or 0 }}</div>
+      <div class="kpi-trend">Registradas no sistema</div>
+    </div>
   </div>
 
-  <div class="stat-card card-coral">
-    <div>
-      <div class="card-label">Documentos Gerados</div>
-      <div class="card-sub">Total no histórico</div>
-    </div>
-    <div class="card-bottom">
-      <div class="card-value">{{ total_docs or 0 }}</div>
-      <div class="card-icon">
-        <svg width="17" height="17" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
+  <div class="kpi">
+    <div class="kpi-top">
+      <div class="kpi-icon" aria-hidden="true">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
         </svg>
       </div>
+    </div>
+    <div>
+      <div class="kpi-label">Documentos Gerados</div>
+      <div class="kpi-value">{{ total_docs or 0 }}</div>
+      <div class="kpi-trend">Total no histórico</div>
     </div>
   </div>
 
 </div>
 
-<!-- ── Middle Row ── -->
-<div class="middle-row">
+<!-- Chart + Overview -->
+<div class="dash-2col">
 
-  <!-- Chart -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Atividade Geral</div>
-      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div class="legend">
-          <span><span class="legend-dot" style="background:#4361ee"></span>Contratos</span>
-          <span><span class="legend-dot" style="background:#7209b7"></span>Vistorias</span>
-          <span><span class="legend-dot" style="background:#48cae4"></span>Documentos</span>
+  <div class="card">
+    <div class="card-head">
+      <h3>Atividade Geral</h3>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-3);">
+          <span style="display:flex;align-items:center;gap:4px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--brand-orange);display:inline-block;"></span>Contratos
+          </span>
+          <span style="display:flex;align-items:center;gap:4px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--info);display:inline-block;"></span>Vistorias
+          </span>
+          <span style="display:flex;align-items:center;gap:4px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;"></span>Documentos
+          </span>
         </div>
-        <select class="period-select">
-          <option>Este mês</option>
-          <option>Últimos 3 meses</option>
-        </select>
       </div>
     </div>
-    <div class="chart-wrap">
-      <canvas id="activityChart"></canvas>
+    <div class="dash-chart-wrap">
+      <canvas id="activityChart" aria-label="Gráfico de atividade geral" role="img"></canvas>
     </div>
   </div>
 
-  <!-- Overview -->
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Visão Geral</div>
-    </div>
-
-    <div class="overview-nums">
-      <div class="ov-num">
+  <div class="card">
+    <div class="card-head"><h3>Visão Geral</h3></div>
+    <div class="ov-grid">
+      <div class="ov-cell">
         <div class="ov-val">{{ total_contratos or 0 }}</div>
         <div class="ov-lbl">Contratos</div>
       </div>
-      <div class="ov-num">
+      <div class="ov-cell">
         <div class="ov-val">{{ total_docs or 0 }}</div>
         <div class="ov-lbl">Documentos</div>
       </div>
     </div>
-
     <div class="progress-list">
       <div>
         <div class="progress-row">
           <span class="progress-name">Locação</span>
           <span class="progress-val">{{ total_contratos or 0 }}</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill fill-orange" style="width:65%"></div>
+        <div class="progress" style="height:5px;">
+          <div style="width:65%;background:var(--brand-orange);"></div>
         </div>
       </div>
       <div>
@@ -353,17 +210,17 @@
           <span class="progress-name">Vistoria</span>
           <span class="progress-val">{{ total_vistorias or 0 }}</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill fill-purple" style="width:35%"></div>
+        <div class="progress" style="height:5px;">
+          <div style="width:35%;background:var(--info);"></div>
         </div>
       </div>
       <div>
         <div class="progress-row">
-          <span class="progress-name">Outros Docs</span>
+          <span class="progress-name">Outros docs</span>
           <span class="progress-val">{{ [((total_docs or 0)|int - (total_contratos or 0)|int), 0]|max }}</span>
         </div>
-        <div class="progress-bar">
-          <div class="progress-fill fill-blue" style="width:20%"></div>
+        <div class="progress" style="height:5px;">
+          <div style="width:20%;background:var(--success);"></div>
         </div>
       </div>
     </div>
@@ -371,52 +228,70 @@
 
 </div>
 
-<!-- ── Últimos Contratos ── -->
-<div class="panel">
-  <div class="table-header-row">
-    <div class="panel-title">Últimos Contratos de Locação</div>
-    <div class="table-actions">
-      <a href="{{ url_for('historico_contratos') }}" class="btn-circle" title="Ver todos"
-         style="font-size:0.7rem;">→</a>
-      <a href="{{ url_for('pagina_contrato_locacao') }}" class="btn-circle" title="Novo contrato">+</a>
+<!-- Recent contracts -->
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);">
+    <div>
+      <h3 style="font-size:15px;font-weight:600;">Últimos Contratos de Locação</h3>
+      <p style="font-size:12.5px;color:var(--ink-3);margin-top:3px;">Registros mais recentes</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="{{ url_for('pagina_contrato_locacao') }}" class="btn btn-primary btn-sm">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Novo
+      </a>
+      <a href="{{ url_for('historico_contratos') }}" class="btn btn-ghost btn-sm">Ver todos</a>
     </div>
   </div>
 
   {% if contratos %}
-  <table class="dash-table">
-    <thead>
-      <tr>
-        <th>Locatário</th>
-        <th>Placa</th>
-        <th>Veículo</th>
-        <th>Início</th>
-        <th>Valor/sem.</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for c in contratos %}
-      <tr>
-        <td>{{ c.locatario_nome or '—' }}</td>
-        <td><span class="badge-placa">{{ c.veiculo_placa or '—' }}</span></td>
-        <td>{{ (c.veiculo_marca or '') + ' ' + (c.veiculo_modelo or '') }}</td>
-        <td style="white-space:nowrap">{{ c.contrato_inicio or '—' }}</td>
-        <td>{% if c.valor_semanal %}R$ {{ c.valor_semanal }}{% else %}—{% endif %}</td>
-        <td><span class="badge-status badge-ativo">Ativo</span></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div style="overflow-x:auto;">
+    <table class="dash-table">
+      <thead>
+        <tr>
+          <th>Locatário</th>
+          <th>Placa</th>
+          <th>Veículo</th>
+          <th>Início</th>
+          <th>Valor/sem.</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contratos %}
+        <tr>
+          <td style="font-weight:600;">{{ c.locatario_nome or '—' }}</td>
+          <td><span class="badge-placa">{{ c.veiculo_placa or '—' }}</span></td>
+          <td style="color:var(--ink-2);">{{ (c.veiculo_marca or '') + ' ' + (c.veiculo_modelo or '') }}</td>
+          <td style="white-space:nowrap;color:var(--ink-3);font-size:12.5px;">{{ c.contrato_inicio or '—' }}</td>
+          <td style="font-variant-numeric:tabular-nums;font-weight:600;">
+            {% if c.valor_semanal %}R$ {{ c.valor_semanal }}{% else %}—{% endif %}
+          </td>
+          <td><span class="badge badge-success">Ativo</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
-  <p style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:2rem 0;">
-    Nenhum contrato registrado ainda.
-  </p>
+  <div class="empty-state">
+    <svg width="40" height="40" fill="none" stroke="var(--ink-4)" stroke-width="1.5" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+    </svg>
+    <p>Nenhum contrato registrado ainda.</p>
+    <a href="{{ url_for('pagina_contrato_locacao') }}" class="btn btn-primary btn-sm">Criar primeiro contrato</a>
+  </div>
   {% endif %}
 </div>
 
 <script>
-  const ctx = document.getElementById('activityChart').getContext('2d');
-  new Chart(ctx, {
+(function () {
+  var ctx = document.getElementById('activityChart');
+  if (!ctx) return;
+  new Chart(ctx.getContext('2d'), {
     type: 'line',
     data: {
       labels: ['Sem 1','Sem 2','Sem 3','Sem 4','Sem 5','Sem 6','Sem 7','Sem 8','Sem 9','Sem 10'],
@@ -424,23 +299,26 @@
         {
           label: 'Contratos',
           data: [3,5,4,6,5,8,7,9,6,8],
-          borderColor: '#4361ee',
-          backgroundColor: 'rgba(67,97,238,0.08)',
+          borderColor: '#FF4713',
+          backgroundColor: 'rgba(255,71,19,.07)',
           borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3,
+          pointBackgroundColor: '#FF4713',
         },
         {
           label: 'Vistorias',
           data: [1,2,3,2,4,3,5,4,6,5],
-          borderColor: '#7209b7',
-          backgroundColor: 'rgba(114,9,183,0.06)',
+          borderColor: '#2E6BE6',
+          backgroundColor: 'rgba(46,107,230,.05)',
           borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3,
+          pointBackgroundColor: '#2E6BE6',
         },
         {
           label: 'Documentos',
           data: [5,7,6,9,8,11,10,13,11,14],
-          borderColor: '#48cae4',
-          backgroundColor: 'rgba(72,202,228,0.06)',
+          borderColor: '#0FAA6E',
+          backgroundColor: 'rgba(15,170,110,.05)',
           borderWidth: 2.5, tension: 0.4, fill: true, pointRadius: 3,
+          pointBackgroundColor: '#0FAA6E',
         },
       ],
     },
@@ -452,20 +330,21 @@
         tooltip: {
           mode: 'index', intersect: false,
           backgroundColor: '#fff',
-          titleColor: '#1e293b', bodyColor: '#64748b',
-          borderColor: '#e2e8f0', borderWidth: 1, padding: 10,
+          titleColor: '#15192A', bodyColor: '#6C7388',
+          borderColor: '#E7E9EF', borderWidth: 1, padding: 10,
         },
       },
       scales: {
-        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8' } },
+        x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#9BA1B3' } },
         y: {
-          grid: { color: '#f1f5f9' },
-          ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 5 },
+          grid: { color: '#F0F2F6' },
+          ticks: { font: { size: 11 }, color: '#9BA1B3', stepSize: 5 },
           min: 0,
         },
       },
     },
   });
+})();
 </script>
 
 {% endblock %}

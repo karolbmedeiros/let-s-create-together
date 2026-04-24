@@ -3,226 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login — ATIVUZ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      min-height: 100vh;
-      display: flex;
-    }
-
-    /* ── Painel esquerdo ── */
-    .left-panel {
-      width: 45%;
-      background: #12192b;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 3rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .left-panel::before {
-      content: '';
-      position: absolute;
-      top: -80px; right: -80px;
-      width: 300px; height: 300px;
-      border-radius: 50%;
-      background: rgba(67, 97, 238, 0.12);
-    }
-
-    .left-panel::after {
-      content: '';
-      position: absolute;
-      bottom: -60px; left: -60px;
-      width: 220px; height: 220px;
-      border-radius: 50%;
-      background: rgba(247, 37, 133, 0.08);
-    }
-
-    .left-content {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-    }
-
-    .logo-img {
-      width: 260px;
-      max-width: 100%;
-      margin-bottom: 2.5rem;
-      filter: brightness(0) invert(1);
-    }
-
-    .left-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #e2e8f0;
-      margin-bottom: .5rem;
-    }
-
-    .left-sub {
-      font-size: .82rem;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    /* ── Painel direito ── */
-    .right-panel {
-      flex: 1;
-      background: #f0f2f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
-
-    .login-card {
-      background: #fff;
-      border-radius: 18px;
-      padding: 2.5rem 2.25rem;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 4px 24px rgba(0,0,0,.08);
-    }
-
-    .login-card h1 {
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: .4rem;
-    }
-
-    .login-card p {
-      font-size: .82rem;
-      color: #64748b;
-      margin-bottom: 2rem;
-    }
-
-    .field { margin-bottom: 1.1rem; }
-
-    label {
-      display: block;
-      font-size: .75rem;
-      font-weight: 600;
-      color: #475569;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      margin-bottom: .4rem;
-    }
-
-    input {
-      width: 100%;
-      padding: .65rem .9rem;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 9px;
-      font-size: .9rem;
-      font-family: inherit;
-      color: #1e293b;
-      background: #f8fafc;
-      outline: none;
-      transition: border-color .15s, box-shadow .15s;
-    }
-
-    input:focus {
-      border-color: #4361ee;
-      background: #fff;
-      box-shadow: 0 0 0 3px rgba(67,97,238,.12);
-    }
-
-    input::placeholder { color: #94a3b8; }
-
-    .btn-login {
-      width: 100%;
-      margin-top: 1.5rem;
-      padding: .75rem;
-      background: #4361ee;
-      color: #fff;
-      border: none;
-      border-radius: 9px;
-      font-size: .95rem;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: background .15s, box-shadow .15s;
-      box-shadow: 0 2px 8px rgba(67,97,238,.35);
-    }
-
-    .btn-login:hover { background: #3451d1; }
-    .btn-login:disabled { opacity: .7; cursor: not-allowed; }
-
-    .erro {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
-      border-radius: 8px;
-      padding: .7rem .9rem;
-      font-size: .82rem;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: .5rem;
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 700px) {
-      body { flex-direction: column; }
-      .left-panel { width: 100%; padding: 2.5rem 1.5rem; min-height: auto; }
-      .logo-img { width: 180px; margin-bottom: 1rem; }
-      .left-title, .left-sub { display: none; }
-    }
-  </style>
+  <title>Entrar — ATIVUZ</title>
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='tokens.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-  <!-- Painel esquerdo -->
-  <div class="left-panel">
-    <div class="left-content">
+  <div class="login-wrap">
+
+    <form class="login-card fade-in" method="POST" action="{{ url_for('login') }}" novalidate>
+
       <img src="{{ url_for('static', filename='ativuz-logo.png') }}"
-           alt="ATIVUZ Veículos" class="logo-img">
-      <div class="left-title">Sistema de Gestão de Contratos</div>
-      <div class="left-sub">Acesso restrito a usuários autorizados.</div>
-    </div>
-  </div>
+           alt="ATIVUZ Veículos" class="login-logo">
 
-  <!-- Painel direito -->
-  <div class="right-panel">
-    <div class="login-card">
-      <h1>Bem-vindo</h1>
-      <p>Insira suas credenciais para continuar.</p>
+      <h1 class="login-title">Acesse sua conta</h1>
+      <p class="login-sub">Gestão e controle de frotas B2B.</p>
 
-      {% if erro %}
-      <div class="erro">
-        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        {{ erro }}
-      </div>
-      {% endif %}
+      <div class="login-fields">
 
-      <form method="POST" action="{{ url_for('login') }}">
         <div class="field">
-          <label for="nome">Nome</label>
-          <input type="text" id="nome" name="nome" placeholder="Seu nome de usuário"
-                 autocomplete="username" required autofocus>
+          <label for="nome">Login</label>
+          <div class="input-group">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+            <input id="nome" class="input" type="text" name="nome"
+                   autocomplete="username" placeholder="Seu nome de usuário"
+                   required autofocus aria-required="true">
+          </div>
         </div>
+
         <div class="field">
           <label for="senha">Senha</label>
-          <input type="password" id="senha" name="senha" placeholder="••••••••"
-                 autocomplete="current-password" required>
+          <div class="input-group">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input id="senha" class="input" type="password" name="senha"
+                   autocomplete="current-password" placeholder="••••••••••"
+                   required aria-required="true">
+            <button type="button" class="suffix" id="toggle-pass"
+                    aria-label="Mostrar/ocultar senha"
+                    style="background:none;border:none;padding:4px 8px;color:var(--ink-3);cursor:pointer;display:grid;place-items:center;">
+              <svg id="eye-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="btn-login">Entrar</button>
-      </form>
-    </div>
+
+        {% if erro %}
+        <div class="badge badge-danger" style="height:auto;padding:9px 12px;align-self:flex-start;" role="alert">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {{ erro }}
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary login-btn">
+          Entrar
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <line x1="5" y1="12" x2="19" y2="12"/>
+            <polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </button>
+
+      </div>
+
+      <div class="login-foot">
+        Ainda não tem acesso?
+        <a href="mailto:ativuz.veiculos@gmail.com" class="link">Solicitar acesso</a>
+      </div>
+
+    </form>
+
+    <div class="login-copy">© 2026 Ativuz Veículos · Gestão de frotas B2B</div>
+
   </div>
+
+  <script>
+    var toggleBtn = document.getElementById('toggle-pass');
+    var senhaInput = document.getElementById('senha');
+    var eyeIcon = document.getElementById('eye-icon');
+    if (toggleBtn && senhaInput) {
+      toggleBtn.addEventListener('click', function () {
+        var isText = senhaInput.type === 'text';
+        senhaInput.type = isText ? 'password' : 'text';
+        eyeIcon.innerHTML = isText
+          ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>'
+          : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        toggleBtn.setAttribute('aria-label', isText ? 'Mostrar senha' : 'Ocultar senha');
+      });
+    }
+  </script>
 
 </body>
 </html>
