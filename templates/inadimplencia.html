@@ -6,18 +6,18 @@
   /* ── Summary cards ── */
   .inad-cards {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
     margin-bottom: 20px;
   }
 
   .inad-card {
     border-radius: 14px;
-    padding: 18px 20px;
+    padding: 16px 18px;
     color: #fff;
     position: relative;
     overflow: hidden;
-    min-height: 100px;
+    min-height: 92px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -27,19 +27,20 @@
     content: '';
     position: absolute;
     top: -18px; right: -18px;
-    width: 70px; height: 70px;
+    width: 64px; height: 64px;
     border-radius: 50%;
     background: rgba(255,255,255,0.1);
   }
 
   .inad-card.c-red    { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); }
+  .inad-card.c-blue   { background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 100%); }
   .inad-card.c-orange { background: linear-gradient(135deg, #c2410c 0%, #f97316 100%); }
   .inad-card.c-dark   { background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%); }
   .inad-card.c-slate  { background: linear-gradient(135deg, #374151 0%, #4b5563 100%); }
 
-  .inad-card-top { font-size: 0.72rem; font-weight: 500; opacity: 0.88; }
-  .inad-card-val { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
-  .inad-card-sub { font-size: 0.67rem; opacity: 0.75; margin-top: 3px; }
+  .inad-card-top { font-size: 0.7rem; font-weight: 500; opacity: 0.88; }
+  .inad-card-val { font-size: 1.55rem; font-weight: 700; line-height: 1.1; }
+  .inad-card-sub { font-size: 0.64rem; opacity: 0.75; margin-top: 3px; }
 
   /* ── Filter bar ── */
   .filter-bar {
@@ -51,25 +52,25 @@
     margin-bottom: 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 
   .filter-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 14px;
     align-items: center;
   }
 
   .filter-group {
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 6px;
     flex-wrap: wrap;
   }
 
   .filter-lbl {
-    font-size: 0.7rem;
+    font-size: 0.69rem;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -81,9 +82,9 @@
   .fpill {
     display: inline-flex;
     align-items: center;
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 99px;
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 600;
     border: 1.5px solid var(--border);
     background: #fff;
@@ -111,12 +112,9 @@
   }
 
   .filter-search svg {
-    position: absolute;
-    left: 9px;
-    top: 50%;
+    position: absolute; left: 9px; top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
-    pointer-events: none;
+    color: var(--text-muted); pointer-events: none;
   }
 
   .filter-search input {
@@ -145,11 +143,7 @@
     gap: 8px;
   }
 
-  .sort-meta-left {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-  }
-
+  .sort-meta-left { font-size: 0.8rem; color: var(--text-muted); }
   .sort-meta-left strong { color: var(--text); }
 
   .btn-sort {
@@ -170,7 +164,27 @@
 
   .btn-sort:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* ── Records list ── */
+  /* ── Section headers ── */
+  .section-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .section-hdr::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Records grid ── */
   .inad-list {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -182,10 +196,10 @@
     border-radius: 14px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
-    padding: 20px;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 11px;
   }
 
   /* item header */
@@ -204,24 +218,19 @@
     min-width: 0;
   }
 
-  .risk-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
+  .risk-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .dot-green  { background: #16a34a; }
   .dot-yellow { background: #ca8a04; }
 
   .inad-nome {
-    font-size: 0.97rem;
+    font-size: 0.95rem;
     font-weight: 700;
     color: var(--text);
     word-break: break-word;
   }
 
   .risk-label {
-    font-size: 0.65rem;
+    font-size: 0.63rem;
     font-weight: 600;
     padding: 2px 7px;
     border-radius: 99px;
@@ -234,28 +243,36 @@
 
   /* stage badge */
   .etapa-badge {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    padding: 3px 10px;
+    padding: 3px 9px;
     border-radius: 99px;
     white-space: nowrap;
     flex-shrink: 0;
   }
 
-  .stage-d0  { background: #e0f2fe; color: #0369a1; }
-  .stage-d1  { background: #fef9c3; color: #a16207; }
-  .stage-d3  { background: #ffedd5; color: #c2410c; }
-  .stage-d5  { background: #fee2e2; color: #dc2626; }
-  .stage-d7  { background: #fca5a5; color: #7f1d1d; }
-  .stage-d10 { background: #ef4444; color: #fff; }
-  .stage-d15 { background: #7f1d1d; color: #fca5a5; }
+  .stage-d0   { background: #e0f2fe; color: #0369a1; }
+  .stage-d1   { background: #fef9c3; color: #a16207; }
+  .stage-d2   { background: #fef9c3; color: #a16207; }
+  .stage-d3   { background: #ffedd5; color: #c2410c; }
+  .stage-d5   { background: #fee2e2; color: #dc2626; }
+  .stage-d7   { background: #fca5a5; color: #7f1d1d; }
+  .stage-d10  { background: #ef4444; color: #fff; }
+  .stage-d15  { background: #7f1d1d; color: #fca5a5; }
+  .stage-av   { background: #dcfce7; color: #15803d; }
 
-  /* meta info */
-  .inad-desc {
-    font-size: 0.8rem;
+  /* meta */
+  .inad-doc-row {
+    font-size: 0.76rem;
     color: var(--text-muted);
-    font-style: italic;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
   }
+
+  .inad-doc-row .doc-num { font-weight: 600; color: var(--text); }
+  .meta-sep { color: var(--border); }
 
   .inad-meta {
     display: flex;
@@ -267,10 +284,9 @@
   }
 
   .inad-meta strong { color: var(--text); }
-  .meta-sep { color: var(--border); }
 
   .dias-badge {
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     font-weight: 700;
     padding: 2px 8px;
     border-radius: 99px;
@@ -278,9 +294,10 @@
     color: #dc2626;
   }
 
-  .dias-badge.d0 { background: #e0f2fe; color: #0369a1; }
+  .dias-badge.d0  { background: #e0f2fe; color: #0369a1; }
+  .dias-badge.dav { background: #dcfce7; color: #15803d; }
 
-  /* ── Próxima ação accordion ── */
+  /* Próxima ação accordion */
   .inad-acao-wrap {
     border: 1px solid #fde68a;
     border-radius: 9px;
@@ -294,7 +311,7 @@
     padding: 7px 12px;
     background: #fffbeb;
     cursor: pointer;
-    font-size: 0.78rem;
+    font-size: 0.77rem;
     font-weight: 700;
     color: #92400e;
     list-style: none;
@@ -304,14 +321,10 @@
   .inad-acao-wrap > summary::-webkit-details-marker { display: none; }
 
   .inad-acao-wrap > summary .acao-chevron {
-    margin-left: auto;
-    flex-shrink: 0;
-    transition: transform .2s;
+    margin-left: auto; flex-shrink: 0; transition: transform .2s;
   }
 
-  .inad-acao-wrap[open] > summary .acao-chevron {
-    transform: rotate(90deg);
-  }
+  .inad-acao-wrap[open] > summary .acao-chevron { transform: rotate(90deg); }
 
   .inad-acao-body {
     padding: 8px 12px 10px;
@@ -322,11 +335,11 @@
     line-height: 1.5;
   }
 
-  /* ── Financial breakdown ── */
+  /* Financial breakdown */
   .inad-fin {
     background: #f8fafc;
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 11px 13px;
     display: flex;
     flex-direction: column;
     gap: 5px;
@@ -336,24 +349,20 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.78rem;
+    font-size: 0.77rem;
   }
 
   .fin-lbl  { color: var(--text-muted); }
   .fin-val  { font-weight: 500; color: var(--text); }
   .fin-red  { color: #dc2626; }
 
-  .fin-sep {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 3px 0;
-  }
+  .fin-sep { border: none; border-top: 1px solid var(--border); margin: 3px 0; }
 
-  .fin-total-lbl { font-weight: 700; color: var(--text); font-size: 0.83rem; }
-  .fin-total-val { font-weight: 700; color: var(--text); font-size: 0.9rem; }
+  .fin-total-lbl { font-weight: 700; color: var(--text); font-size: 0.82rem; }
+  .fin-total-val { font-weight: 700; color: var(--text); font-size: 0.88rem; }
 
-  /* Acordo destaque */
-  .fin-acordo-card {
+  /* Pausar cobrança highlight card */
+  .fin-pausar-card {
     margin-top: 6px;
     background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
     border: 1px solid #93c5fd;
@@ -365,30 +374,30 @@
     gap: 8px;
   }
 
-  .fin-acordo-left { display: flex; flex-direction: column; gap: 2px; }
+  .fin-pausar-left { display: flex; flex-direction: column; gap: 2px; }
 
-  .fin-acordo-lbl {
-    font-size: 0.67rem;
+  .fin-pausar-lbl {
+    font-size: 0.65rem;
     font-weight: 700;
     color: #1d4ed8;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
-  .fin-acordo-note {
-    font-size: 0.65rem;
+  .fin-pausar-note {
+    font-size: 0.63rem;
     color: #3b82f6;
     font-style: italic;
   }
 
-  .fin-acordo-val {
-    font-size: 1.05rem;
+  .fin-pausar-val {
+    font-size: 1.02rem;
     font-weight: 800;
     color: #1e40af;
     white-space: nowrap;
   }
 
-  /* ── WA button groups ── */
+  /* WA button groups */
   .inad-actions {
     display: flex;
     gap: 8px;
@@ -408,7 +417,7 @@
     align-items: center;
     gap: 6px;
     padding: 7px 12px;
-    font-size: 0.8rem;
+    font-size: 0.79rem;
     font-weight: 600;
     font-family: inherit;
     text-decoration: none;
@@ -438,16 +447,41 @@
 
   .btn-copy-main   { background: #1fba59; color: #fff; }
   .btn-copy-pausar { background: #0e7a6d; color: #fff; }
-  .btn-copy:hover { opacity: 0.85; }
+  .btn-copy:hover  { opacity: 0.85; }
   .btn-copy.copied { background: #166534 !important; color: #bbf7d0 !important; }
 
-  /* ── Empty state ── */
+  /* A Vencer section */
+  .av-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  .av-item {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #d1fae5;
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .av-valor {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .av-valor strong { color: var(--text); }
+
+  /* Empty state */
   .inad-empty {
     background: #fff;
     border-radius: 14px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
-    padding: 3.5rem 2rem;
+    padding: 3rem 2rem;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.9rem;
@@ -457,21 +491,22 @@
     gap: 0.75rem;
   }
 
-  /* ── Responsive ── */
-  @media (max-width: 1100px) {
-    .inad-cards { grid-template-columns: repeat(2, 1fr); }
-    .inad-list  { grid-template-columns: 1fr; }
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .inad-cards { grid-template-columns: repeat(3, 1fr); }
   }
 
-  @media (max-width: 768px) {
-    .filter-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+  @media (max-width: 900px) {
+    .inad-cards { grid-template-columns: repeat(2, 1fr); }
+    .inad-list, .av-list { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 600px) {
     .inad-cards { grid-template-columns: 1fr 1fr; }
+    .filter-row { flex-direction: column; align-items: flex-start; }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 420px) {
     .inad-cards { grid-template-columns: 1fr; }
   }
 </style>
@@ -480,7 +515,7 @@
 {% block content %}
 
 <!-- Page header -->
-<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+<div class="page-header" style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-bottom:20px;">
   <div>
     <h1 class="page-title">Controle de Inadimplência</h1>
     <p class="page-sub">Planilha CONTAS-A-RECEBER — atualizado em {{ hoje }}</p>
@@ -506,7 +541,7 @@
 </div>
 {% endif %}
 
-<!-- Summary cards -->
+<!-- Summary cards (5) -->
 <div class="inad-cards">
 
   <div class="inad-card c-red">
@@ -517,18 +552,26 @@
     </div>
   </div>
 
+  <div class="inad-card c-blue">
+    <div class="inad-card-top">A Vencer</div>
+    <div>
+      <div class="inad-card-val">{{ total_a_vencer }}</div>
+      <div class="inad-card-sub">{{ total_a_vencer_val }} previstos</div>
+    </div>
+  </div>
+
   <div class="inad-card c-orange">
     <div class="inad-card-top">Total Original</div>
     <div>
-      <div class="inad-card-val" style="font-size:1.2rem;">{{ total_valor_orig }}</div>
-      <div class="inad-card-sub">valor previsto na planilha</div>
+      <div class="inad-card-val" style="font-size:1.1rem;">{{ total_valor_orig }}</div>
+      <div class="inad-card-sub">valor previsto (vencidos)</div>
     </div>
   </div>
 
   <div class="inad-card c-dark">
     <div class="inad-card-top">Total Atualizado</div>
     <div>
-      <div class="inad-card-val" style="font-size:1.2rem;">{{ total_valor_atual }}</div>
+      <div class="inad-card-val" style="font-size:1.1rem;">{{ total_valor_atual }}</div>
       <div class="inad-card-sub">com multa e juros acumulados</div>
     </div>
   </div>
@@ -543,24 +586,33 @@
 
 </div>
 
-{% if registros %}
-
 <!-- Filter bar -->
 <div class="filter-bar">
   <div class="filter-row">
-    <!-- Etapa pills -->
+    <!-- Situação -->
     <div class="filter-group">
+      <span class="filter-lbl">Situação</span>
+      <button class="fpill on"  data-filter-sit="all">Todos</button>
+      <button class="fpill"     data-filter-sit="vencido">Vencidos</button>
+      <button class="fpill"     data-filter-sit="vence-hoje">Vence hoje</button>
+      <button class="fpill"     data-filter-sit="a-vencer">A Vencer</button>
+    </div>
+    <!-- Etapa -->
+    <div class="filter-group" id="etapa-group">
       <span class="filter-lbl">Etapa</span>
-      <button class="fpill on" data-filter-etapa="all">Todos</button>
+      <button class="fpill on" data-filter-etapa="all">Todas</button>
       <button class="fpill" data-filter-etapa="D+0">D+0</button>
       <button class="fpill" data-filter-etapa="D+1">D+1</button>
+      <button class="fpill" data-filter-etapa="D+2">D+2</button>
       <button class="fpill" data-filter-etapa="D+3">D+3</button>
       <button class="fpill" data-filter-etapa="D+5">D+5</button>
       <button class="fpill" data-filter-etapa="D+7">D+7</button>
       <button class="fpill" data-filter-etapa="D+10">D+10</button>
       <button class="fpill" data-filter-etapa="D+15+">D+15+</button>
     </div>
-    <!-- Perfil pills -->
+  </div>
+  <div class="filter-row">
+    <!-- Perfil -->
     <div class="filter-group">
       <span class="filter-lbl">Perfil</span>
       <button class="fpill on" data-filter-perfil="all">Todos</button>
@@ -569,14 +621,12 @@
     </div>
   </div>
   <div class="filter-bottom">
-    <!-- Search -->
     <div class="filter-search">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
       <input type="text" id="search-nome" placeholder="Buscar por nome do cliente…">
     </div>
-    <!-- Sort toggle -->
     <button id="sort-toggle" class="btn-sort">
       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
         <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
@@ -589,154 +639,231 @@
   </div>
 </div>
 
-<!-- Sort + count bar -->
+<!-- Count bar -->
 <div class="sort-meta-bar">
   <span class="sort-meta-left">
-    Exibindo <strong id="visible-count">{{ total_registros }}</strong> de {{ total_registros }} registro(s)
+    Exibindo <strong id="visible-count">{{ total_registros }}</strong>
+    de {{ total_registros }} registro(s) em atraso
   </span>
 </div>
 
-<!-- Records list -->
-<div class="inad-list" id="inad-list">
-  {% for r in registros %}
-  <div class="inad-item"
-       data-etapa="{{ r.etapa }}"
-       data-reincidente="{{ 'true' if r.reincidente else 'false' }}"
-       data-nome="{{ r.nome | lower | e }}"
-       data-dias="{{ r.dias_atraso }}">
+<!-- ═══════════════ VENCIDOS SECTION ══════════════ -->
+<div id="section-vencidos">
 
-    <!-- Header: nome + etapa badge -->
-    <div class="inad-item-header">
-      <div class="inad-name-row">
-        <span class="risk-dot {% if r.reincidente %}dot-yellow{% else %}dot-green{% endif %}"></span>
-        <span class="inad-nome">{{ r.nome }}</span>
-        <span class="risk-label {% if r.reincidente %}risk-yellow{% else %}risk-green{% endif %}">
-          {% if r.reincidente %}Reincidente{% else %}1ª vez{% endif %}
+  {% if registros %}
+  <div class="section-hdr">Cobranças em Aberto</div>
+  <div class="inad-list" id="inad-list">
+
+    {% for r in registros %}
+    <div class="inad-item"
+         data-etapa="{{ r.etapa }}"
+         data-reincidente="{{ 'true' if r.reincidente else 'false' }}"
+         data-nome="{{ r.nome | lower | e }}"
+         data-dias="{{ r.dias_atraso }}"
+         data-situacao="{{ r.situacao_key }}">
+
+      <!-- Header -->
+      <div class="inad-item-header">
+        <div class="inad-name-row">
+          <span class="risk-dot {% if r.reincidente %}dot-yellow{% else %}dot-green{% endif %}"></span>
+          <span class="inad-nome">{{ r.nome }}</span>
+          <span class="risk-label {% if r.reincidente %}risk-yellow{% else %}risk-green{% endif %}">
+            {% if r.reincidente %}Reincidente{% else %}1ª vez{% endif %}
+          </span>
+        </div>
+        <span class="etapa-badge {{ r.etapa_cls }}">{{ r.etapa }}</span>
+      </div>
+
+      <!-- Doc + Unidade -->
+      {% if r.num_doc or r.unidade %}
+      <div class="inad-doc-row">
+        {% if r.num_doc %}<span class="doc-num">{{ r.num_doc }}</span>{% endif %}
+        {% if r.num_doc and r.unidade %}<span class="meta-sep">·</span>{% endif %}
+        {% if r.unidade %}<span>{{ r.unidade }}</span>{% endif %}
+        {% if r.tipo_fatura %}
+          <span class="meta-sep">·</span>
+          <span>{{ r.tipo_fatura }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Date + days -->
+      <div class="inad-meta">
+        <span>Vencimento: <strong>{{ r.data_vencimento }}</strong></span>
+        <span class="meta-sep">·</span>
+        <span class="dias-badge {% if r.dias_atraso == 0 %}d0{% endif %}">
+          {{ r.dias_label }}
         </span>
       </div>
-      <span class="etapa-badge {{ r.etapa_cls }}">{{ r.etapa }}</span>
-    </div>
 
-    <!-- Description -->
-    {% if r.descricao %}
-    <div class="inad-desc">{{ r.descricao }}</div>
-    {% endif %}
+      <!-- Próxima ação accordion (open by default at D+7+) -->
+      <details class="inad-acao-wrap" {% if r.dias_atraso >= 7 %}open{% endif %}>
+        <summary>
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          Próxima ação
+          <svg class="acao-chevron" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </summary>
+        <div class="inad-acao-body">{{ r.proxima_acao }}</div>
+      </details>
 
-    <!-- Date + days -->
-    <div class="inad-meta">
-      <span>Vencimento: <strong>{{ r.data_vencimento }}</strong></span>
-      <span class="meta-sep">·</span>
-      <span class="dias-badge {% if r.dias_atraso == 0 %}d0{% endif %}">
-        {% if r.dias_atraso == 0 %}Vence hoje
-        {% elif r.dias_atraso == 1 %}1 dia de atraso
-        {% else %}{{ r.dias_atraso }} dias de atraso
-        {% endif %}
-      </span>
-    </div>
-
-    <!-- Próxima ação (accordion — open by default for D+7+) -->
-    <details class="inad-acao-wrap" {% if r.dias_atraso >= 7 %}open{% endif %}>
-      <summary>
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-        </svg>
-        Próxima ação
-        <svg class="acao-chevron" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
-      </summary>
-      <div class="inad-acao-body">{{ r.proxima_acao }}</div>
-    </details>
-
-    <!-- Financial breakdown -->
-    <div class="inad-fin">
-      <div class="fin-row">
-        <span class="fin-lbl">Valor original</span>
-        <span class="fin-val">{{ r.valor_s }}</span>
-      </div>
-      {% if r.dias_atraso >= 1 %}
-      <div class="fin-row">
-        <span class="fin-lbl">Multa única (5%)</span>
-        <span class="fin-val fin-red">+ {{ r.multa_s }}</span>
-      </div>
-      <div class="fin-row">
-        <span class="fin-lbl">Juros mora (0,5%/dia × {{ r.dias_atraso }}d)</span>
-        <span class="fin-val fin-red">+ {{ r.juros_s }}</span>
-      </div>
-      <hr class="fin-sep">
-      <div class="fin-row">
-        <span class="fin-total-lbl">Total atualizado</span>
-        <span class="fin-total-val">{{ r.total_s }}</span>
-      </div>
-      {% if r.wa_pausar %}
-      <div class="fin-acordo-card">
-        <div class="fin-acordo-left">
-          <span class="fin-acordo-lbl">Pausar Cobrança (50%)</span>
-          <span class="fin-acordo-note">Suspende até sexta · saldo continua com juros</span>
+      <!-- Financial breakdown -->
+      <div class="inad-fin">
+        <div class="fin-row">
+          <span class="fin-lbl">Valor original</span>
+          <span class="fin-val">{{ r.valor_s }}</span>
         </div>
-        <span class="fin-acordo-val">{{ r.pausar_s }}</span>
+        {% if r.dias_atraso >= 1 %}
+        <div class="fin-row">
+          <span class="fin-lbl">Multa única (5%)</span>
+          <span class="fin-val fin-red">+ {{ r.multa_s }}</span>
+        </div>
+        <div class="fin-row">
+          <span class="fin-lbl">Juros mora (0,5%/dia × {{ r.dias_atraso }}d)</span>
+          <span class="fin-val fin-red">+ {{ r.juros_s }}</span>
+        </div>
+        <hr class="fin-sep">
+        <div class="fin-row">
+          <span class="fin-total-lbl">Total atualizado</span>
+          <span class="fin-total-val">{{ r.total_s }}</span>
+        </div>
+        {% if r.wa_pausar %}
+        <div class="fin-pausar-card">
+          <div class="fin-pausar-left">
+            <span class="fin-pausar-lbl">Pausar Cobrança (50%)</span>
+            <span class="fin-pausar-note">Suspende até sexta · saldo continua com juros</span>
+          </div>
+          <span class="fin-pausar-val">{{ r.pausar_s }}</span>
+        </div>
+        {% endif %}
+        {% else %}
+        <hr class="fin-sep">
+        <div class="fin-row">
+          <span class="fin-total-lbl">Valor (sem encargos)</span>
+          <span class="fin-total-val">{{ r.valor_s }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- WhatsApp buttons -->
+      <div class="inad-actions">
+        <div class="btn-wa-group">
+          <a href="{{ r.wa_cobranca }}" target="_blank" rel="noopener" class="btn-wa btn-wa-main">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Enviar Cobrança
+          </a>
+          <button class="btn-copy btn-copy-main"
+                  data-idx="{{ loop.index0 }}"
+                  data-type="cobranca"
+                  onclick="copiarMsg(this)"
+                  title="Copiar mensagem">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+
+        {% if r.wa_pausar %}
+        <div class="btn-wa-group">
+          <a href="{{ r.wa_pausar }}" target="_blank" rel="noopener" class="btn-wa btn-wa-pausar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            </svg>
+            Pausar Cobrança (50%)
+          </a>
+          <button class="btn-copy btn-copy-pausar"
+                  data-idx="{{ loop.index0 }}"
+                  data-type="pausar"
+                  onclick="copiarMsg(this)"
+                  title="Copiar mensagem de pausar cobrança">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+        {% endif %}
+
+      </div><!-- .inad-actions -->
+
+    </div><!-- .inad-item -->
+    {% endfor %}
+
+  </div><!-- .inad-list -->
+
+  {% else %}
+  <div class="inad-empty">
+    <svg width="44" height="44" fill="none" stroke="#16a34a" stroke-width="1.5" viewBox="0 0 24 24">
+      <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
+    </svg>
+    <strong style="color:#15803d;">Tudo em dia!</strong>
+    <span>Nenhum registro vencido ou vencendo hoje na planilha.</span>
+  </div>
+  {% endif %}
+
+</div><!-- #section-vencidos -->
+
+<!-- ═══════════════ A VENCER SECTION ══════════════ -->
+<div id="section-a-vencer">
+
+  {% if registros_a_vencer %}
+  <div class="section-hdr" style="color:#15803d;">A Vencer</div>
+  <div class="av-list" id="av-list">
+
+    {% for r in registros_a_vencer %}
+    <div class="av-item"
+         data-reincidente="{{ 'true' if r.reincidente else 'false' }}"
+         data-nome="{{ r.nome | lower | e }}"
+         data-situacao="a-vencer">
+
+      <div class="inad-item-header">
+        <div class="inad-name-row">
+          <span class="risk-dot {% if r.reincidente %}dot-yellow{% else %}dot-green{% endif %}"></span>
+          <span class="inad-nome">{{ r.nome }}</span>
+          <span class="risk-label {% if r.reincidente %}risk-yellow{% else %}risk-green{% endif %}">
+            {% if r.reincidente %}Reincidente{% else %}1ª vez{% endif %}
+          </span>
+        </div>
+        <span class="etapa-badge stage-av">A Vencer</span>
+      </div>
+
+      {% if r.num_doc or r.unidade %}
+      <div class="inad-doc-row">
+        {% if r.num_doc %}<span class="doc-num">{{ r.num_doc }}</span>{% endif %}
+        {% if r.num_doc and r.unidade %}<span class="meta-sep">·</span>{% endif %}
+        {% if r.unidade %}<span>{{ r.unidade }}</span>{% endif %}
+        {% if r.tipo_fatura %}
+          <span class="meta-sep">·</span>
+          <span>{{ r.tipo_fatura }}</span>
+        {% endif %}
       </div>
       {% endif %}
-      {% else %}
-      <hr class="fin-sep">
-      <div class="fin-row">
-        <span class="fin-total-lbl">Total (sem encargos)</span>
-        <span class="fin-total-val">{{ r.valor_s }}</span>
-      </div>
-      {% endif %}
-    </div>
 
-    <!-- WhatsApp buttons + copy -->
-    <div class="inad-actions">
-      <!-- Cobrança group -->
-      <div class="btn-wa-group">
-        <a href="{{ r.wa_cobranca }}" target="_blank" rel="noopener" class="btn-wa btn-wa-main">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-          </svg>
-          Enviar Cobrança
-        </a>
-        <button class="btn-copy btn-copy-main"
-                data-idx="{{ loop.index0 }}"
-                data-type="cobranca"
-                onclick="copiarMsg(this)"
-                title="Copiar texto da mensagem">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="9" y="9" width="13" height="13" rx="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </button>
+      <div class="inad-meta">
+        <span>Vencimento: <strong>{{ r.data_vencimento }}</strong></span>
+        <span class="meta-sep">·</span>
+        <span class="dias-badge dav">
+          vence em {{ r.dias_ate }} dia{{ 's' if r.dias_ate != 1 else '' }}
+        </span>
       </div>
 
-      {% if r.wa_pausar %}
-      <!-- Pausar cobrança group -->
-      <div class="btn-wa-group">
-        <a href="{{ r.wa_pausar }}" target="_blank" rel="noopener" class="btn-wa btn-wa-pausar">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-          </svg>
-          Pausar Cobrança (50%)
-        </a>
-        <button class="btn-copy btn-copy-pausar"
-                data-idx="{{ loop.index0 }}"
-                data-type="pausar"
-                onclick="copiarMsg(this)"
-                title="Copiar texto de pausar cobrança">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <rect x="9" y="9" width="13" height="13" rx="2"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-          </svg>
-        </button>
-      </div>
-      {% endif %}
+      <div class="av-valor">Valor previsto: <strong>{{ r.valor_s }}</strong></div>
 
-    </div><!-- .inad-actions -->
+    </div><!-- .av-item -->
+    {% endfor %}
 
-  </div><!-- .inad-item -->
-  {% endfor %}
-</div><!-- .inad-list -->
+  </div><!-- .av-list -->
+  {% endif %}
 
-<!-- message data for copy buttons -->
+</div><!-- #section-a-vencer -->
+
+<!-- Message data for copy buttons -->
 <script>
 const _msgs = {
   {% for r in registros %}
@@ -748,16 +875,6 @@ const _msgs = {
 };
 </script>
 
-{% else %}
-<div class="inad-empty">
-  <svg width="44" height="44" fill="none" stroke="#16a34a" stroke-width="1.5" viewBox="0 0 24 24">
-    <path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/>
-  </svg>
-  <strong style="color:#15803d;">Tudo em dia!</strong>
-  <span>Nenhum registro vencido ou vencendo hoje na planilha.</span>
-</div>
-{% endif %}
-
 <script>
 (function () {
   /* ── Copy to clipboard ── */
@@ -766,21 +883,17 @@ const _msgs = {
     var type = btn.dataset.type;
     var msg  = _msgs[idx] && _msgs[idx][type];
     if (!msg) return;
-
     var origHTML = btn.innerHTML;
-    var feedback = function () {
+    function feedback() {
       btn.innerHTML = 'Copiado!';
       btn.classList.add('copied');
       setTimeout(function () {
         btn.innerHTML = origHTML;
         btn.classList.remove('copied');
       }, 2000);
-    };
-
+    }
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(msg).then(feedback).catch(function () {
-        fallback(msg); feedback();
-      });
+      navigator.clipboard.writeText(msg).then(feedback).catch(function () { fallback(msg); feedback(); });
     } else {
       fallback(msg); feedback();
     }
@@ -799,38 +912,77 @@ const _msgs = {
   window.copiarMsg = copiarMsg;
 
   /* ── Filter + sort ── */
-  var allItems = Array.prototype.slice.call(document.querySelectorAll('.inad-item'));
-  var listEl   = document.getElementById('inad-list');
-  var countEl  = document.getElementById('visible-count');
-  if (!listEl) return;
+  var vencidoItems = Array.prototype.slice.call(document.querySelectorAll('#inad-list .inad-item'));
+  var avItems      = Array.prototype.slice.call(document.querySelectorAll('#av-list .av-item'));
+  var listEl       = document.getElementById('inad-list');
+  var avListEl     = document.getElementById('av-list');
+  var countEl      = document.getElementById('visible-count');
+  var secVencidos  = document.getElementById('section-vencidos');
+  var secAVencer   = document.getElementById('section-a-vencer');
 
+  var activeSit    = 'all';
   var activeEtapa  = 'all';
   var activePerfil = 'all';
   var searchTxt    = '';
   var sortOrder    = 'desc';
 
   function applyAll() {
-    var visible = allItems.filter(function (item) {
-      if (activeEtapa !== 'all' && item.dataset.etapa !== activeEtapa) return false;
+    /* ── Filter vencidos items ── */
+    var showVencidoSection = (activeSit === 'all' || activeSit === 'vencido' || activeSit === 'vence-hoje');
+
+    var visV = vencidoItems.filter(function (item) {
+      if (!showVencidoSection) return false;
+      if (activeSit === 'vencido'     && item.dataset.situacao !== 'vencido')    return false;
+      if (activeSit === 'vence-hoje'  && item.dataset.situacao !== 'vence-hoje') return false;
+      if (activeEtapa !== 'all'       && item.dataset.etapa    !== activeEtapa)  return false;
+      if (activePerfil !== 'all'      && item.dataset.reincidente !== activePerfil) return false;
+      if (searchTxt && item.dataset.nome.indexOf(searchTxt) === -1) return false;
+      return true;
+    });
+
+    if (listEl) {
+      visV.sort(function (a, b) {
+        var da = parseInt(a.dataset.dias, 10);
+        var db = parseInt(b.dataset.dias, 10);
+        return sortOrder === 'desc' ? db - da : da - db;
+      });
+      vencidoItems.forEach(function (i) { i.style.display = 'none'; });
+      visV.forEach(function (i) { i.style.display = ''; listEl.appendChild(i); });
+    }
+
+    if (countEl) countEl.textContent = visV.length;
+
+    /* ── Filter a-vencer items ── */
+    var showAVSection = (activeSit === 'all' || activeSit === 'a-vencer');
+    var etapaOk = (activeSit === 'a-vencer' || activeEtapa === 'all');
+
+    var visAV = avItems.filter(function (item) {
+      if (!showAVSection) return false;
+      if (!etapaOk)       return false;
       if (activePerfil !== 'all' && item.dataset.reincidente !== activePerfil) return false;
       if (searchTxt && item.dataset.nome.indexOf(searchTxt) === -1) return false;
       return true;
     });
 
-    visible.sort(function (a, b) {
-      var da = parseInt(a.dataset.dias, 10);
-      var db = parseInt(b.dataset.dias, 10);
-      return sortOrder === 'desc' ? db - da : da - db;
-    });
+    if (avListEl) {
+      avItems.forEach(function (i) { i.style.display = 'none'; });
+      visAV.forEach(function (i) { i.style.display = ''; });
+    }
 
-    allItems.forEach(function (item) { item.style.display = 'none'; });
-    visible.forEach(function (item) {
-      item.style.display = '';
-      listEl.appendChild(item);
-    });
-
-    if (countEl) countEl.textContent = visible.length;
+    /* Show/hide section wrappers */
+    if (secVencidos) secVencidos.style.display = showVencidoSection ? '' : 'none';
+    if (secAVencer)  secAVencer.style.display  = (showAVSection && visAV.length > 0) ? '' : 'none';
   }
+
+  /* Situação pills */
+  document.querySelectorAll('[data-filter-sit]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-filter-sit]').forEach(function (b) { b.classList.remove('on'); });
+      btn.classList.add('on');
+      activeSit = btn.dataset.filterSit;
+      applyAll();
+    });
+  });
 
   /* Etapa pills */
   document.querySelectorAll('[data-filter-etapa]').forEach(function (btn) {
