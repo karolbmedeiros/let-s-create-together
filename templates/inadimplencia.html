@@ -255,6 +255,7 @@
   .stage-d1   { background: #fef9c3; color: #a16207; }
   .stage-d2   { background: #fef9c3; color: #a16207; }
   .stage-d3   { background: #ffedd5; color: #c2410c; }
+  .stage-d4   { background: #fed7aa; color: #9a3412; }
   .stage-d5   { background: #fee2e2; color: #dc2626; }
   .stage-d7   { background: #fca5a5; color: #7f1d1d; }
   .stage-d10  { background: #ef4444; color: #fff; }
@@ -528,20 +529,6 @@
       </svg>
       Recarregar
     </a>
-    <form method="POST" action="{{ url_for('inadimplencia_upload') }}"
-          enctype="multipart/form-data" style="margin:0;"
-          id="upload-form">
-      <label class="btn btn-primary btn-sm" style="cursor:pointer;" id="upload-label">
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <polyline points="16 16 12 12 8 16"/>
-          <line x1="12" y1="12" x2="12" y2="21"/>
-          <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-        </svg>
-        Atualizar planilha
-        <input type="file" name="planilha" accept=".xlsx" style="display:none;"
-               onchange="document.getElementById('upload-label').textContent='Enviando…'; this.form.submit();">
-      </label>
-    </form>
   </div>
 </div>
 
@@ -613,13 +600,14 @@
       <button class="fpill" data-filter-etapa="D+1">D+1</button>
       <button class="fpill" data-filter-etapa="D+2">D+2</button>
       <button class="fpill" data-filter-etapa="D+3">D+3</button>
+      <button class="fpill" data-filter-etapa="D+4">D+4</button>
       <button class="fpill" data-filter-etapa="D+5">D+5</button>
       <button class="fpill" data-filter-etapa="D+7">D+7</button>
       <button class="fpill" data-filter-etapa="D+10">D+10</button>
-      <button class="fpill" data-filter-etapa="D+15+">D+15+</button>
+      <button class="fpill" data-filter-etapa="D+15">D+15</button>
     </div>
   </div>
-  <!-- 2. Situação + 3. Perfil -->
+  <!-- 2. Situação -->
   <div class="filter-row">
     <div class="filter-group">
       <span class="filter-lbl">Situação</span>
@@ -627,12 +615,6 @@
       <button class="fpill"     data-filter-sit="vencido">Vencidos</button>
       <button class="fpill"     data-filter-sit="vence-hoje">Vence hoje</button>
       <button class="fpill"     data-filter-sit="a-vencer">A Vencer</button>
-    </div>
-    <div class="filter-group">
-      <span class="filter-lbl">Perfil</span>
-      <button class="fpill on" data-filter-perfil="all">Todos</button>
-      <button class="fpill" data-filter-perfil="false">1ª vez</button>
-      <button class="fpill" data-filter-perfil="true">Reincidente</button>
     </div>
   </div>
   <!-- 4. Busca -->
@@ -744,6 +726,13 @@
           {{ r.dias_label }}
         </span>
       </div>
+
+      {% if r.dias_atraso >= 5 %}
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;
+                  padding:8px 12px;font-size:0.76rem;color:#9a3412;line-height:1.45;">
+        ⚠️ Recolhimento do veículo pode ser acionado em caso de não resposta ou ausência de contato.
+      </div>
+      {% endif %}
 
       <!-- Próxima ação accordion (open by default at D+7+) -->
       <details class="inad-acao-wrap" {% if r.dias_atraso >= 7 %}open{% endif %}>
@@ -986,11 +975,10 @@ const _fin = [
   var secVencidos  = document.getElementById('section-vencidos');
   var secAVencer   = document.getElementById('section-a-vencer');
 
-  var activeSit    = 'all';
-  var activeEtapa  = 'all';
-  var activePerfil = 'all';
-  var searchTxt    = '';
-  var sortOrder    = 'desc';
+  var activeSit   = 'all';
+  var activeEtapa = 'all';
+  var searchTxt   = '';
+  var sortOrder   = 'desc';
 
   function applyAll() {
     /* ── Filter vencidos items ── */
@@ -1001,7 +989,6 @@ const _fin = [
       if (activeSit === 'vencido'     && item.dataset.situacao !== 'vencido')    return false;
       if (activeSit === 'vence-hoje'  && item.dataset.situacao !== 'vence-hoje') return false;
       if (activeEtapa !== 'all'       && item.dataset.etapa    !== activeEtapa)  return false;
-      if (activePerfil !== 'all'      && item.dataset.reincidente !== activePerfil) return false;
       if (searchTxt && item.dataset.nome.indexOf(searchTxt) === -1) return false;
       return true;
     });
@@ -1025,7 +1012,6 @@ const _fin = [
     var visAV = avItems.filter(function (item) {
       if (!showAVSection) return false;
       if (!etapaOk)       return false;
-      if (activePerfil !== 'all' && item.dataset.reincidente !== activePerfil) return false;
       if (searchTxt && item.dataset.nome.indexOf(searchTxt) === -1) return false;
       return true;
     });
@@ -1056,16 +1042,6 @@ const _fin = [
       document.querySelectorAll('[data-filter-etapa]').forEach(function (b) { b.classList.remove('on'); });
       btn.classList.add('on');
       activeEtapa = btn.dataset.filterEtapa;
-      applyAll();
-    });
-  });
-
-  /* Perfil pills */
-  document.querySelectorAll('[data-filter-perfil]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('[data-filter-perfil]').forEach(function (b) { b.classList.remove('on'); });
-      btn.classList.add('on');
-      activePerfil = btn.dataset.filterPerfil;
       applyAll();
     });
   });
