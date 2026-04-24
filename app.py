@@ -413,6 +413,7 @@ def dashboard():
             total_docs = rd.count or 0
         except Exception:
             pass
+    inad = _inad_summary()
     return render_template(
         "dashboard.html",
         active="dashboard",
@@ -421,6 +422,7 @@ def dashboard():
         total_docs=total_docs,
         valor_mensal=valor_mensal,
         contratos=contratos,
+        inad=inad,
     )
 
 
@@ -1395,6 +1397,192 @@ def _parse_valor_excel(raw):
         return float(s)
     except (ValueError, TypeError):
         return 0.0
+
+
+def _inad_summary():
+    """Read CONTAS-A-RECEBER.xlsx and return aggregated data for the dashboard."""
+    import openpyxl
+
+    def _nh(s):
+        s = unicodedata.normalize("NFD", str(s or "").lower())
+        return "".join(c for c in s if unicodedata.category(c) != "Mn")
+
+    xlsx_path = Path(__file__).parent / "docx_templates" / "CONTAS-A-RECEBER.xlsx"
+    if not xlsx_path.exists():
+        return None
+
+    try:
+        wb = openpyxl.load_workbook(str(xlsx_path), read_only=True, data_only=True)
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        wb.close()
+
+        header_idx = 0
+        _htargets = ["receber de", "vencimento", "valor"]
+        for ri, row in enumerate(rows[:10]):
+            nh_row = [_nh(str(c or "")) for c in row]
+            if sum(1 for t in _htargets if any(t in n for n in nh_row)) >= 2:
+                header_idx = ri
+                break
+
+        header    = rows[header_idx]
+        data_rows = rows[header_idx + 1:]
+
+        def _ci(keyword):
+            nk = _nh(keyword)
+            return next((i for i, h in enumerate(header)
+                         if h is not None and nk in _nh(str(h))), None)
+
+        i_nome  = _ci("receber de (fantasia)") or _ci("receber de")
+        i_valor = _ci("valor previsto") or _ci("valor")
+        i_venc  = _ci("data de vencimento") or _ci("vencimento")
+        i_sit   = _ci("situacao (data de vencimento)") or _ci("situacao")
+        i_doc   = _ci("numero do documento") or _ci("documento")
+        i_unid  = _ci("unidade")
+
+        hoje = date.today()
+        _MULTA_VALS = {600, 630, 650, 680, 700, 800, 1200}
+
+        def _get(row, idx):
+            return row[idx] if idx is not None and idx < len(row) else None
+
+        registros = []
+        for row in data_rows:
+            nome_raw = _get(row, i_nome)
+            if not nome_raw:
+                continue
+            nome = str(nome_raw).strip()
+            if not nome:
+                continue
+
+            valor = _parse_valor_excel(_get(row, i_valor))
+            if valor <= 0:
+                continue
+
+            venc_raw = _get(row, i_venc)
+            sit_raw  = str(_get(row, i_sit) or "").lower()
+
+            venc_date = None
+            if venc_raw:
+                if isinstance(venc_raw, datetime):
+                    venc_date = venc_raw.date()
+                elif isinstance(venc_raw, date):
+                    venc_date = venc_raw
+                else:
+                    for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"]:
+                        try:
+                            venc_date = datetime.strptime(str(venc_raw).strip(), fmt).date()
+                            break
+                        except (ValueError, TypeError):
+                            pass
+            if venc_date is None:
+                continue
+
+            if "a vencer" in sit_raw and venc_date > hoje:
+                continue
+
+            if venc_date == hoje:
+                dias = 0
+            else:
+                dias = (hoje - venc_date).days
+                if dias < 0:
+                    continue
+
+            qualifica = int(round(valor)) in _MULTA_VALS
+            multa = valor * 0.05 if (dias >= 1 and qualifica) else 0.0
+            juros = valor * 0.005 * dias if dias >= 1 else 0.0
+            total = valor + multa + juros
+
+            if dias == 0:    etapa = "D+0"
+            elif dias == 1:  etapa = "D+1"
+            elif dias == 2:  etapa = "D+2"
+            elif dias == 3:  etapa = "D+3"
+            elif dias == 4:  etapa = "D+4"
+            elif dias <= 6:  etapa = "D+5"
+            elif dias <= 9:  etapa = "D+7"
+            elif dias <= 14: etapa = "D+10"
+            else:            etapa = "D+15"
+
+            doc  = str(_get(row, i_doc) or "").strip()
+            unid = str(_get(row, i_unid) or "").strip()
+
+            registros.append({
+                "nome":    nome,
+                "placa":   doc or unid or "—",
+                "venc":    venc_date.strftime("%d/%m/%Y"),
+                "dias":    dias,
+                "total_s": _brl(total),
+                "etapa":   etapa,
+            })
+
+        if not registros:
+            return {"total_s": _brl(0), "casos": 0, "hoje": 0,
+                    "por_etapa": {}, "recentes": [], "total_raw": 0}
+
+        total_aberto = sum(_parse_valor_excel(r["total_s"]) for r in registros)
+        # Re-compute from original values stored above via closure isn't possible;
+        # sum total_s back from formatted strings by re-reading raw registros
+        total_aberto_raw = 0.0
+        for row in data_rows:
+            nome_raw = _get(row, i_nome)
+            if not nome_raw or not str(nome_raw).strip():
+                continue
+            valor = _parse_valor_excel(_get(row, i_valor))
+            if valor <= 0:
+                continue
+            venc_raw = _get(row, i_venc)
+            sit_raw  = str(_get(row, i_sit) or "").lower()
+            venc_date = None
+            if venc_raw:
+                if isinstance(venc_raw, datetime):
+                    venc_date = venc_raw.date()
+                elif isinstance(venc_raw, date):
+                    venc_date = venc_raw
+                else:
+                    for fmt in ["%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y"]:
+                        try:
+                            venc_date = datetime.strptime(str(venc_raw).strip(), fmt).date()
+                            break
+                        except (ValueError, TypeError):
+                            pass
+            if venc_date is None:
+                continue
+            if "a vencer" in sit_raw and venc_date > hoje:
+                continue
+            if venc_date == hoje:
+                dias = 0
+            else:
+                dias = (hoje - venc_date).days
+                if dias < 0:
+                    continue
+            qualifica = int(round(valor)) in _MULTA_VALS
+            multa = valor * 0.05 if (dias >= 1 and qualifica) else 0.0
+            juros = valor * 0.005 * dias if dias >= 1 else 0.0
+            total_aberto_raw += valor + multa + juros
+
+        nomes_unicos = set(r["nome"] for r in registros)
+        hoje_count   = sum(1 for r in registros if r["dias"] == 0)
+
+        etapas = ["D+0","D+1","D+2","D+3","D+4","D+5","D+7","D+10","D+15"]
+        por_etapa = {e: 0 for e in etapas}
+        for r in registros:
+            if r["etapa"] in por_etapa:
+                por_etapa[r["etapa"]] += 1
+
+        recentes = sorted(registros, key=lambda r: r["dias"], reverse=True)[:8]
+
+        return {
+            "total_s":   _brl(total_aberto_raw),
+            "total_raw": total_aberto_raw,
+            "casos":     len(nomes_unicos),
+            "hoje":      hoje_count,
+            "por_etapa": por_etapa,
+            "recentes":  recentes,
+        }
+
+    except Exception:
+        import traceback; traceback.print_exc()
+        return None
 
 
 @app.route("/inadimplencia")
