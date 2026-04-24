@@ -1734,68 +1734,18 @@ def pagina_inadimplencia():
     )
 
 
-@app.route("/inadimplencia/push", methods=["POST"])
-def inadimplencia_push():
-    import subprocess, shutil as _shutil
-
-    # Locate git by checking known paths (Flask's PATH may differ from the shell)
-    _git = None
-    for _candidate in [
-        r"C:\Program Files\Git\cmd\git.exe",
-        r"C:\Program Files\Git\mingw64\bin\git.exe",
-        r"C:\Program Files\Git\bin\git.exe",
-        r"C:\Program Files (x86)\Git\cmd\git.exe",
-        r"C:\Program Files (x86)\Git\mingw64\bin\git.exe",
-    ]:
-        if Path(_candidate).exists():
-            _git = _candidate
-            break
-    if not _git:
-        _git = _shutil.which("git")  # last resort: try PATH
-    if not _git:
-        flash("Git não encontrado. Verifique a instalação do Git for Windows.", "error")
+@app.route("/inadimplencia/upload", methods=["POST"])
+def inadimplencia_upload():
+    f = request.files.get("planilha")
+    if not f or not f.filename:
+        flash("Nenhum arquivo selecionado.", "error")
         return redirect(url_for("pagina_inadimplencia"))
-
-    repo_dir = str(Path(__file__).parent)
-    xlsx_rel = "docx_templates/CONTAS-A-RECEBER.xlsx"
-    xlsx_abs = Path(__file__).parent / xlsx_rel
-
-    # If the user dropped a EDITADO file, promote it first
-    editado = Path(__file__).parent / "docx_templates" / "CONTAS-A-RECEBER-EDITADO.xlsx"
-    if editado.exists():
-        _shutil.copy2(str(editado), str(xlsx_abs))
-
-    def _run(*args, **kw):
-        return subprocess.run([_git] + list(args), cwd=repo_dir,
-                              capture_output=True, text=True, **kw)
-
-    try:
-        # Check if the file has uncommitted changes
-        status = _run("status", "--porcelain", xlsx_rel, timeout=15)
-        if not status.stdout.strip():
-            flash("A planilha já está atualizada no servidor — nenhuma mudança detectada.", "info")
-            return redirect(url_for("pagina_inadimplencia"))
-
-        add = _run("add", xlsx_rel, timeout=15)
-        if add.returncode != 0:
-            flash(f"Erro no git add: {add.stderr.strip()}", "error")
-            return redirect(url_for("pagina_inadimplencia"))
-
-        commit = _run("commit", "-m", "data: atualizar planilha CONTAS-A-RECEBER.xlsx",
-                      timeout=15)
-        if commit.returncode != 0:
-            flash(f"Erro no git commit: {commit.stderr.strip()}", "error")
-            return redirect(url_for("pagina_inadimplencia"))
-
-        push = _run("push", "origin", "main", timeout=120)
-        if push.returncode == 0:
-            flash("Planilha atualizada e publicada no Render com sucesso!", "success")
-        else:
-            flash(f"Commit feito, mas erro no push: {push.stderr.strip()}", "error")
-
-    except Exception as e:
-        flash(f"Erro inesperado: {e}", "error")
-
+    if not f.filename.lower().endswith(".xlsx"):
+        flash("Apenas arquivos .xlsx são aceitos.", "error")
+        return redirect(url_for("pagina_inadimplencia"))
+    dest = Path(__file__).parent / "docx_templates" / "CONTAS-A-RECEBER.xlsx"
+    f.save(str(dest))
+    flash("Planilha atualizada! Os dados abaixo refletem o arquivo enviado.", "success")
     return redirect(url_for("pagina_inadimplencia"))
 
 
