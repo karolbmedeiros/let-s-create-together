@@ -1715,5 +1715,53 @@ def pagina_inadimplencia():
     )
 
 
+@app.route("/inadimplencia/push", methods=["POST"])
+def inadimplencia_push():
+    import subprocess
+    repo_dir = str(Path(__file__).parent)
+    xlsx_rel = "docx_templates/CONTAS-A-RECEBER.xlsx"
+    xlsx_abs = Path(__file__).parent / xlsx_rel
+
+    # If the user dropped a EDITADO file, promote it first
+    editado = Path(__file__).parent / "docx_templates" / "CONTAS-A-RECEBER-EDITADO.xlsx"
+    if editado.exists():
+        import shutil
+        shutil.copy2(str(editado), str(xlsx_abs))
+
+    try:
+        # Check if the file has uncommitted changes
+        status = subprocess.run(
+            ["git", "status", "--porcelain", xlsx_rel],
+            cwd=repo_dir, capture_output=True, text=True, timeout=15
+        )
+        if not status.stdout.strip():
+            flash("A planilha já está atualizada no servidor — nenhuma mudança detectada.", "info")
+            return redirect(url_for("pagina_inadimplencia"))
+
+        subprocess.run(
+            ["git", "add", xlsx_rel],
+            cwd=repo_dir, check=True, timeout=15
+        )
+        subprocess.run(
+            ["git", "commit", "-m", "data: atualizar planilha CONTAS-A-RECEBER.xlsx"],
+            cwd=repo_dir, check=True, timeout=15
+        )
+        push = subprocess.run(
+            ["git", "push", "origin", "main"],
+            cwd=repo_dir, capture_output=True, text=True, timeout=120
+        )
+        if push.returncode == 0:
+            flash("Planilha atualizada e enviada ao Render com sucesso!", "success")
+        else:
+            flash(f"Commit feito, mas erro no push: {push.stderr.strip()}", "error")
+
+    except subprocess.CalledProcessError as e:
+        flash(f"Erro no git: {e}", "error")
+    except Exception as e:
+        flash(f"Erro inesperado: {e}", "error")
+
+    return redirect(url_for("pagina_inadimplencia"))
+
+
 if __name__ == "__main__":
     app.run(debug=True)
