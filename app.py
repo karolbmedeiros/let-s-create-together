@@ -1569,107 +1569,31 @@ def pagina_inadimplencia():
 
                 # WhatsApp messages per stage
                 if dias == 0:
-                    msg = (
-                        f"Oi, {nome}! 😊 Passando para avisar que sua parcela de\n"
-                        f"*{_brl(valor)}* vence *hoje*.\n"
-                        f"Qualquer dúvida, é só chamar!\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"Oi, {nome}! 😊 Passando para avisar que sua parcela de *{_brl(valor)}* vence *hoje*. Qualquer dúvida, é só chamar!\n\n\n*Ativuz Veículos*"
                 elif dias == 1:
-                    msg = (
-                        f"{nome}, sua parcela de *{_brl(valor)}* venceu ontem\n"
-                        f"(vencimento: {data_fmt}).\n"
-                        f"O valor atualizado é *{_brl(total)}*.\n"
-                        f"Assim que puder, regularize para evitar encargos adicionais.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, sua parcela de *{_brl(valor)}* venceu ontem (vencimento: {data_fmt}). O valor atualizado é *{_brl(total)}*. Assim que puder, regularize para evitar encargos adicionais.\n\n\n*Ativuz Veículos*"
                 elif dias == 2:
-                    msg = (
-                        f"{nome}, seu pagamento de *{_brl(total)}* ainda está\n"
-                        f"em aberto (vencimento: {data_fmt}).\n"
-                        f"Caso tenha alguma dúvida ou dificuldade, entre em contato\n"
-                        f"antes que os encargos aumentem.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, seu pagamento de *{_brl(total)}* ainda está em aberto (vencimento: {data_fmt}). Caso tenha alguma dúvida ou dificuldade, entre em contato antes que os encargos aumentem.\n\n\n*Ativuz Veículos*"
                 elif dias == 3:
-                    msg = (
-                        f"{nome}, seu pagamento está em aberto há *{dias_s}*\n"
-                        f"(vencimento: {data_fmt}).\n"
-                        f"Valor atualizado: *{_brl(total)}*.\n"
-                        f"Caso haja algum imprevisto, entre em contato — mas precisamos\n"
-                        f"regularizar em breve para evitar a suspensão do serviço.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, seu pagamento está em aberto há *{dias_s}* (vencimento: {data_fmt}). Valor atualizado: *{_brl(total)}*. Caso haja algum imprevisto, entre em contato — mas precisamos regularizar em breve para evitar a suspensão do serviço.\n\n\n*Ativuz Veículos*"
                 elif dias == 4:
-                    msg = (
-                        f"{nome}, sua parcela de *{_brl(valor)}* segue em aberto\n"
-                        f"há *{dias_s}* (vencimento: {data_fmt}).\n"
-                        f"Valor atualizado: *{_brl(total)}*.\n"
-                        f"Regularize o quanto antes para evitar a suspensão do veículo.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, sua parcela de *{_brl(valor)}* segue em aberto há *{dias_s}* (vencimento: {data_fmt}). Valor atualizado: *{_brl(total)}*. Regularize o quanto antes para evitar a suspensão do veículo.\n\n\n*Ativuz Veículos*"
                 elif dias <= 6:   # D+5
-                    msg = (
-                        f"{nome}, infelizmente precisamos suspender o serviço por\n"
-                        f"inadimplência, conforme contrato.\n"
-                        f"Valor atualizado: *{_brl(total)}*.\n"
-                        f"Para reativação, basta regularizar o pagamento.\n"
-                        f"Estamos à disposição.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, infelizmente precisamos suspender o serviço por inadimplência, conforme contrato. Valor atualizado: *{_brl(total)}*. Para reativação, basta regularizar o pagamento. Estamos à disposição.\n\n\n*Ativuz Veículos*"
                 elif dias <= 9:   # D+7
-                    msg = (
-                        f"{nome}, seu débito de *{_brl(total)}* está em aberto\n"
-                        f"há {dias_s}.\n"
-                        f"Esta é uma notificação formal com prazo de *48 horas* para\n"
-                        f"regularização antes de tomarmos as próximas medidas previstas\n"
-                        f"em contrato.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, seu débito de *{_brl(total)}* está em aberto há {dias_s}. Esta é uma notificação formal com prazo de *48 horas* para regularização antes de tomarmos as próximas medidas previstas em contrato.\n\n\n*Ativuz Veículos*"
                 elif dias <= 14:  # D+10
-                    msg = (
-                        f"{nome}, informamos que seu débito foi encaminhado para\n"
-                        f"negativação e assessoria jurídica.\n"
-                        f"Valor atualizado: *{_brl(total)}*.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, informamos que seu débito foi encaminhado para negativação e assessoria jurídica. Valor atualizado: *{_brl(total)}*.\n\n\n*Ativuz Veículos*"
                 else:             # D+15
-                    msg = (
-                        f"{nome}, comunicamos que serão iniciados os procedimentos de\n"
-                        f"protesto em cartório e execução contratual.\n"
-                        f"Valor atualizado: *{_brl(total)}*.\n\n\n"
-                        f"*Ativuz Veículos*"
-                    )
+                    msg = f"{nome}, comunicamos que serão iniciados os procedimentos de protesto em cartório e execução contratual. Valor atualizado: *{_brl(total)}*.\n\n\n*Ativuz Veículos*"
 
                 # Pausar cobrança: FATURA only, D+1 or D+2
                 mostrar_pausar = is_fatura and 1 <= dias <= 2
                 if mostrar_pausar:
                     if dias == 1:
-                        msg_pausar = (
-                            f"{nome}, sua parcela de *{_brl(valor)}* está em aberto\n"
-                            f"(vencimento: {data_fmt}).\n"
-                            f"O valor atualizado é *{_brl(total)}*.\n\n"
-                            f"📌 Pague *{_brl(pausar)}* hoje e quite *{_brl(pausar)}*\n"
-                            f"até a sexta-feira desta semana.\n"
-                            f"⚠️ Juros de 0,5% ao dia continuam correndo sobre o saldo restante.\n"
-                            f"Sem pagamento até sexta, a cobrança retoma no sábado.\n"
-                            f"⚠️ Não se trata de desconto. O valor total do débito\n"
-                            f"permanece integral.\n\n\n"
-                            f"*Ativuz Veículos*"
-                        )
+                        msg_pausar = f"{nome}, sua parcela de *{_brl(valor)}* está em aberto (vencimento: {data_fmt}). O valor atualizado é *{_brl(total)}*. 📌 Pague *{_brl(pausar)}* hoje e quite *{_brl(pausar)}* até a sexta-feira desta semana. ⚠️ Juros de 0,5% ao dia continuam correndo sobre o saldo restante. Sem pagamento até sexta, a cobrança retoma no sábado. ⚠️ Não se trata de desconto. O valor total do débito permanece integral.\n\n\n*Ativuz Veículos*"
                     else:  # dias == 2
-                        msg_pausar = (
-                            f"{nome}, sua parcela de *{_brl(valor)}* está em aberto\n"
-                            f"há *2 dias* (vencimento: {data_fmt}).\n"
-                            f"O valor atualizado é *{_brl(total)}*.\n\n"
-                            f"📌 Pague *{_brl(pausar)}* hoje e quite *{_brl(pausar)}*\n"
-                            f"até a sexta-feira desta semana.\n"
-                            f"⚠️ Juros de 0,5% ao dia continuam correndo sobre o saldo restante.\n"
-                            f"Sem pagamento até sexta, a cobrança retoma no sábado.\n"
-                            f"⚠️ Não se trata de desconto. O valor total do débito\n"
-                            f"permanece integral.\n\n\n"
-                            f"*Ativuz Veículos*"
-                        )
+                        msg_pausar = f"{nome}, sua parcela de *{_brl(valor)}* está em aberto há *2 dias* (vencimento: {data_fmt}). O valor atualizado é *{_brl(total)}*. 📌 Pague *{_brl(pausar)}* hoje e quite *{_brl(pausar)}* até a sexta-feira desta semana. ⚠️ Juros de 0,5% ao dia continuam correndo sobre o saldo restante. Sem pagamento até sexta, a cobrança retoma no sábado. ⚠️ Não se trata de desconto. O valor total do débito permanece integral.\n\n\n*Ativuz Veículos*"
                 else:
                     msg_pausar = None
 
