@@ -1486,6 +1486,7 @@ def pagina_inadimplencia():
                                  if i_desc is not None and i_desc < len(row) and row[i_desc]
                                  else "")
                     reincidente = name_counts[nome] > 1
+                    is_locacao  = "locacao" in _nh(descricao)
 
                     if dias == 0:
                         etapa, etapa_cls = "D+0", "stage-d0"
@@ -1495,7 +1496,7 @@ def pagina_inadimplencia():
                         proxima = "Cobrança formal + aplicar multa e juros"
                     elif dias <= 3:
                         etapa, etapa_cls = "D+3", "stage-d3"
-                        proxima = "Pressão + avisar suspensão em 48h + oferecer acordo"
+                        proxima = "Pressão + avisar suspensão em 48h"
                     elif dias <= 5:
                         etapa, etapa_cls = "D+5", "stage-d5"
                         proxima = "Bloqueio do veículo"
@@ -1512,7 +1513,7 @@ def pagina_inadimplencia():
                     multa  = valor * 0.05 if dias >= 1 else 0.0
                     juros  = valor * 0.005 * dias if dias >= 1 else 0.0
                     total  = valor + multa + juros
-                    acordo = total * 0.5
+                    pausar = total * 0.5
 
                     data_fmt = venc_date.strftime("%d/%m/%Y")
                     dias_label = f"{dias} dia{'s' if dias != 1 else ''} de atraso" if dias > 0 else "Vence hoje"
@@ -1520,38 +1521,38 @@ def pagina_inadimplencia():
                     # WhatsApp messages per stage
                     if dias == 0:
                         msg = (
-                            f"Olá, {nome}! Passando para lembrar que sua parcela de {_brl(valor)} "
+                            f"Olá, {nome}! Passando para lembrar que sua parcela de *{_brl(valor)}* "
                             f"vence *hoje* ({data_fmt}). Efetue o pagamento para evitar multa e juros. "
                             f"Qualquer dúvida, estamos à disposição!\n\n*Ativuz Veículos*"
                         )
                     elif dias == 1:
                         msg = (
-                            f"Olá, {nome}. Sua parcela de {_brl(valor)} venceu em {data_fmt} "
-                            f"(1 dia de atraso). O valor atualizado com multa (5%) e juros de mora é de "
+                            f"Olá, {nome}. Sua parcela de *{_brl(valor)}* venceu em {data_fmt} "
+                            f"(1 dia de atraso). O valor atualizado com multa de 5% e juros de mora é "
                             f"*{_brl(total)}*. Por favor, regularize sua situação o quanto antes.\n\n"
                             f"*Ativuz Veículos*"
                         )
                     elif dias <= 3:
                         msg = (
-                            f"Olá, {nome}. Sua parcela de {_brl(valor)} está em aberto há *{dias} dias* "
-                            f"(vencimento: {data_fmt}). O valor atualizado é *{_brl(total)}*. "
+                            f"Olá, {nome}. Sua parcela de *{_brl(valor)}* está em aberto há *{dias} dias* "
+                            f"(vencimento: {data_fmt}). O valor atualizado é *{_brl(total)}*.\n"
                             f"⚠️ Caso não haja regularização em 48h, o veículo será *suspenso*. "
-                            f"Podemos oferecer um acordo de *{_brl(acordo)}* (50% do total). "
-                            f"Entre em contato!\n\n*Ativuz Veículos*"
+                            f"Entre em contato para evitar maiores transtornos!\n\n*Ativuz Veículos*"
                         )
                     elif dias <= 5:
                         msg = (
                             f"⛔ Olá, {nome}. Informamos que, devido ao débito de *{_brl(total)}* "
-                            f"(parcela original: {_brl(valor)}, vencida há {dias} dias), "
-                            f"o veículo está sendo *bloqueado*. Para regularização ou acordo ({_brl(acordo)}), "
-                            f"entre em contato imediatamente.\n\n*Ativuz Veículos*"
+                            f"(parcela original: *{_brl(valor)}*, vencida há {dias} dias), "
+                            f"o veículo está sendo *bloqueado*. "
+                            f"Entre em contato imediatamente para regularizar sua situação.\n\n"
+                            f"*Ativuz Veículos*"
                         )
                     elif dias <= 7:
                         msg = (
                             f"⚠️ *NOTIFICAÇÃO FORMAL* — {nome}, seu débito de *{_brl(total)}* "
-                            f"(original: {_brl(valor)}, vencido em {data_fmt}, {dias} dias de atraso) "
-                            f"permanece em aberto. Concedemos prazo de *48 horas* para pagamento ou "
-                            f"acordo ({_brl(acordo)}). Após esse prazo, seu nome será *negativado*.\n\n"
+                            f"(original: *{_brl(valor)}*, vencido em {data_fmt}, {dias} dias de atraso) "
+                            f"permanece em aberto. Concedemos prazo de *48 horas* para pagamento. "
+                            f"Após esse prazo, seu nome será *negativado*.\n\n"
                             f"*Ativuz Veículos*"
                         )
                     elif dias <= 10:
@@ -1568,15 +1569,19 @@ def pagina_inadimplencia():
                             f"Entre em contato *imediatamente*.\n\n*Ativuz Veículos*"
                         )
 
-                    msg_acordo = (
-                        f"Olá, {nome}! Temos uma proposta de acordo para regularizar sua situação. "
-                        f"Valor total atualizado: *{_brl(total)}*. Oferecemos um desconto de 50%, "
-                        f"totalizando *{_brl(acordo)}* (o saldo restante continua com juros correndo). "
-                        f"Entre em contato para formalizar!\n\n*Ativuz Veículos*"
-                    )
+                    # "Pausar cobrança" option: only for LOCAÇÃO records at D+1 or D+2
+                    mostrar_pausar = is_locacao and 1 <= dias <= 2
+                    msg_pausar = (
+                        f"Olá, {nome}! Para te ajudar nesse momento, temos a opção de "
+                        f"*pausar sua cobrança*: com o pagamento de 50% do valor atualizado "
+                        f"(*{_brl(pausar)}*), a cobrança fica suspensa até a próxima sexta-feira. "
+                        f"O saldo restante continua acumulando juros de 0,5%/dia e a cobrança é "
+                        f"retomada automaticamente no sábado caso não seja quitado.\n\n"
+                        f"Entre em contato para confirmar!\n\n*Ativuz Veículos*"
+                    ) if mostrar_pausar else None
 
                     wa_cobranca = "https://wa.me/?text=" + _url_quote(msg)
-                    wa_acordo   = ("https://wa.me/?text=" + _url_quote(msg_acordo)) if dias >= 3 else None
+                    wa_pausar   = ("https://wa.me/?text=" + _url_quote(msg_pausar)) if mostrar_pausar else None
 
                     registros.append({
                         "descricao":        descricao,
@@ -1585,18 +1590,19 @@ def pagina_inadimplencia():
                         "dias_atraso":      dias,
                         "dias_label":       dias_label,
                         "reincidente":      reincidente,
+                        "is_locacao":       is_locacao,
                         "etapa":            etapa,
                         "etapa_cls":        etapa_cls,
                         "proxima_acao":     proxima,
                         "wa_cobranca":      wa_cobranca,
-                        "wa_acordo":        wa_acordo,
+                        "wa_pausar":        wa_pausar,
                         "msg_cobranca_txt": msg,
-                        "msg_acordo_txt":   msg_acordo if dias >= 3 else None,
+                        "msg_pausar_txt":   msg_pausar,
                         "valor_s":          _brl(valor),
                         "multa_s":          _brl(multa),
                         "juros_s":          _brl(juros),
                         "total_s":          _brl(total),
-                        "acordo_s":         _brl(acordo),
+                        "pausar_s":         _brl(pausar),
                         "_valor":           valor,
                         "_total":           total,
                     })

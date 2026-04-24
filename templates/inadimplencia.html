@@ -418,8 +418,8 @@
   }
 
   .btn-wa:hover { opacity: 0.88; }
-  .btn-wa-main  { background: #25d366; color: #fff; }
-  .btn-wa-acordo { background: #128c7e; color: #fff; }
+  .btn-wa-main   { background: #25d366; color: #fff; }
+  .btn-wa-pausar { background: #128c7e; color: #fff; }
 
   .btn-copy {
     display: inline-flex;
@@ -436,8 +436,8 @@
     border-left: 1px solid rgba(255,255,255,0.25);
   }
 
-  .btn-copy-main  { background: #1fba59; color: #fff; }
-  .btn-copy-acordo { background: #0e7a6d; color: #fff; }
+  .btn-copy-main   { background: #1fba59; color: #fff; }
+  .btn-copy-pausar { background: #0e7a6d; color: #fff; }
   .btn-copy:hover { opacity: 0.85; }
   .btn-copy.copied { background: #166534 !important; color: #bbf7d0 !important; }
 
@@ -668,13 +668,13 @@
         <span class="fin-total-lbl">Total atualizado</span>
         <span class="fin-total-val">{{ r.total_s }}</span>
       </div>
-      {% if r.dias_atraso >= 3 %}
+      {% if r.wa_pausar %}
       <div class="fin-acordo-card">
         <div class="fin-acordo-left">
-          <span class="fin-acordo-lbl">Proposta de Acordo (50%)</span>
-          <span class="fin-acordo-note">Saldo restante continua com juros</span>
+          <span class="fin-acordo-lbl">Pausar Cobrança (50%)</span>
+          <span class="fin-acordo-note">Suspende até sexta · saldo continua com juros</span>
         </div>
-        <span class="fin-acordo-val">{{ r.acordo_s }}</span>
+        <span class="fin-acordo-val">{{ r.pausar_s }}</span>
       </div>
       {% endif %}
       {% else %}
@@ -708,20 +708,20 @@
         </button>
       </div>
 
-      {% if r.wa_acordo %}
-      <!-- Acordo group -->
+      {% if r.wa_pausar %}
+      <!-- Pausar cobrança group -->
       <div class="btn-wa-group">
-        <a href="{{ r.wa_acordo }}" target="_blank" rel="noopener" class="btn-wa btn-wa-acordo">
+        <a href="{{ r.wa_pausar }}" target="_blank" rel="noopener" class="btn-wa btn-wa-pausar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
-          Proposta de Acordo
+          Pausar Cobrança (50%)
         </a>
-        <button class="btn-copy btn-copy-acordo"
+        <button class="btn-copy btn-copy-pausar"
                 data-idx="{{ loop.index0 }}"
-                data-type="acordo"
+                data-type="pausar"
                 onclick="copiarMsg(this)"
-                title="Copiar texto do acordo">
+                title="Copiar texto de pausar cobrança">
           <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <rect x="9" y="9" width="13" height="13" rx="2"/>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
@@ -742,7 +742,7 @@ const _msgs = {
   {% for r in registros %}
   {{ loop.index0 }}: {
     cobranca: {{ r.msg_cobranca_txt | tojson }},
-    acordo:   {{ (r.msg_acordo_txt or '') | tojson }}
+    pausar:   {{ (r.msg_pausar_txt or '') | tojson }}
   }{% if not loop.last %},{% endif %}
   {% endfor %}
 };
