@@ -1,9 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { FileText, FilePlus, FolderOpen } from "lucide-react";
+import { FileText, FilePlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/templates", label: "Templates", icon: FolderOpen },
   { href: "/generate", label: "Gerar Contrato", icon: FilePlus },
   { href: "/contracts", label: "Contratos Gerados", icon: FileText },
 ] as const;

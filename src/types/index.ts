@@ -1,33 +1,29 @@
-export type TemplateCategory = "Residencial" | "Comercial" | "Temporada" | "Outros";
+export interface ContractFormData {
+  // Locador
+  locadorNome: string;
+  locadorDoc: string;
+  locadorEndereco: string;
 
-export interface Template {
-  id: string;
-  name: string;
-  category: TemplateCategory;
-  fileName: string;
-  fileBase64: string;
-  extractedText: string;
-  uploadedAt: string;
-  sizeBytes: number;
-}
+  // Locatário
+  locatarioNome: string;
+  locatarioCpf: string;
+  locatarioRg: string;
+  locatarioEndereco: string;
 
-export interface Replacement {
-  original: string;
-  replacement: string;
+  // Imóvel
+  imovelEndereco: string;
+  imovelDescricao: string;
+
+  // Contrato
+  valorAluguel: string;
+  prazoMeses: string;
+  dataInicio: string; // YYYY-MM-DD
+  diaVencimento: string;
 }
 
 export interface GeneratedContract {
   id: string;
-  templateId: string;
-  templateName: string;
-  tenantName: string;
-  instructions: string;
-  replacements: Replacement[];
+  data: ContractFormData;
   outputFileBase64: string;
   generatedAt: string;
-}
-
-export interface GenerationResult {
-  contract: GeneratedContract;
-  warnings: string[];
 }

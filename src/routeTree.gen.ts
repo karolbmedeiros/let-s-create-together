@@ -9,16 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as GenerateRouteImport } from './routes/generate'
 import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as IndexRouteImport } from './routes/index'
 
-const TemplatesRoute = TemplatesRouteImport.update({
-  id: '/templates',
-  path: '/templates',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const GenerateRoute = GenerateRouteImport.update({
   id: '/generate',
   path: '/generate',
@@ -39,45 +33,34 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
   '/generate': typeof GenerateRoute
-  '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
   '/generate': typeof GenerateRoute
-  '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
   '/generate': typeof GenerateRoute
-  '/templates': typeof TemplatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contracts' | '/generate' | '/templates'
+  fullPaths: '/' | '/contracts' | '/generate'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contracts' | '/generate' | '/templates'
-  id: '__root__' | '/' | '/contracts' | '/generate' | '/templates'
+  to: '/' | '/contracts' | '/generate'
+  id: '__root__' | '/' | '/contracts' | '/generate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContractsRoute: typeof ContractsRoute
   GenerateRoute: typeof GenerateRoute
-  TemplatesRoute: typeof TemplatesRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/templates': {
-      id: '/templates'
-      path: '/templates'
-      fullPath: '/templates'
-      preLoaderRoute: typeof TemplatesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/generate': {
       id: '/generate'
       path: '/generate'
@@ -106,7 +89,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContractsRoute: ContractsRoute,
   GenerateRoute: GenerateRoute,
-  TemplatesRoute: TemplatesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
