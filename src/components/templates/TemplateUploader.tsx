@@ -38,7 +38,7 @@ export function TemplateUploader() {
     if (!name) setName(f.name.replace(/\.docx$/i, "").replace(/_/g, " "));
   }
 
-  function onDrop(e: DragEvent<HTMLDivElement>) {
+  function onDrop(e: DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setDragging(false);
     const f = e.dataTransfer.files[0];
