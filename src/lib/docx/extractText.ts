@@ -4,7 +4,8 @@
  */
 
 export async function extractTextFromDocx(arrayBuffer: ArrayBuffer): Promise<string> {
-  const mammoth = await import("mammoth/mammoth.browser");
+  // mammoth tem build de browser; o entry padrão funciona via Vite no client.
+  const mammoth = await import("mammoth");
   const result = await mammoth.extractRawText({ arrayBuffer });
   return result.value;
 }

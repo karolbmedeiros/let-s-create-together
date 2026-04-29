@@ -1,30 +1,25 @@
-import {
-  Outlet,
-  createRootRoute,
-  HeadContent,
-  Scripts,
-} from "@tanstack/react-router";
+import { Outlet, createRootRoute, HeadContent, Scripts, Link } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { Toaster } from "@/components/ui/sonner";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { TopBar } from "@/components/layout/TopBar";
+import { HydrationProvider } from "@/components/layout/HydrationProvider";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          A página que você procura não existe ou foi movida.
+        <h1 className="text-7xl font-bold text-gray-900">404</h1>
+        <h2 className="mt-4 text-xl font-semibold text-gray-900">Página não encontrada</h2>
+        <p className="mt-2 text-sm text-gray-500">
+          A página que você procura não existe.
         </p>
-        <a
-          href="/"
-          className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+        <Link
+          to="/templates"
+          className="mt-6 inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
         >
-          Voltar para o início
-        </a>
+          Ir para Templates
+        </Link>
       </div>
     </div>
   );
@@ -35,19 +30,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Contratual — Gere contratos em minutos" },
-      {
-        name: "description",
-        content:
-          "Crie contratos profissionais (PDF e DOCX) em minutos a partir de modelos prontos.",
-      },
-      { property: "og:title", content: "Contratual — Gere contratos em minutos" },
-      {
-        property: "og:description",
-        content: "Modelos prontos, formulário simples, download em PDF ou DOCX.",
-      },
+      { title: "ContratoGen" },
+      { name: "description", content: "Gerador de contratos de locação" },
+      { property: "og:title", content: "ContratoGen" },
+      { property: "og:description", content: "Gerador de contratos de locação" },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -55,7 +42,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
     ],
   }),
@@ -70,7 +57,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body className="antialiased">
         {children}
         <Scripts />
       </body>
@@ -80,13 +67,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
-      <main className="flex-1">
-        <Outlet />
-      </main>
-      <Footer />
-      <Toaster richColors position="top-right" />
-    </div>
+    <HydrationProvider>
+      <Sidebar />
+      <div className="ml-60 flex min-h-screen flex-col">
+        <TopBar />
+        <main className="flex-1 p-6">
+          <Outlet />
+        </main>
+      </div>
+    </HydrationProvider>
   );
 }
