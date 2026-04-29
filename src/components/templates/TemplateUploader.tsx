@@ -85,9 +85,10 @@ export function TemplateUploader() {
       <h2 className="text-sm font-semibold text-gray-900">Adicionar Novo Template</h2>
 
       {/* Drop zone */}
-      <div
+      <label
+        htmlFor="template-file-input"
         className={cn(
-          "cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors",
+          "block cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors",
           dragging
             ? "border-blue-400 bg-blue-50"
             : file
@@ -100,14 +101,18 @@ export function TemplateUploader() {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        onClick={() => inputRef.current?.click()}
       >
         <input
           ref={inputRef}
+          id="template-file-input"
           type="file"
           accept=".docx"
-          className="hidden"
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+          className="sr-only"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) handleFile(f);
+            e.target.value = "";
+          }}
         />
         {file ? (
           <div className="flex items-center justify-center gap-2 text-green-700">
@@ -123,7 +128,7 @@ export function TemplateUploader() {
             <p className="text-xs text-gray-400">Somente arquivos Word (.docx)</p>
           </div>
         )}
-      </div>
+      </label>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
