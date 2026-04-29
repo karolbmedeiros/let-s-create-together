@@ -8,7 +8,7 @@ import {
 } from "docx";
 import type { ContractFormData } from "@/types";
 
-function p(text: string, opts: { bold?: boolean; align?: AlignmentType } = {}) {
+function p(text: string, opts: { bold?: boolean; align?: (typeof AlignmentType)[keyof typeof AlignmentType] } = {}) {
   return new Paragraph({
     alignment: opts.align,
     spacing: { after: 120 },
@@ -150,9 +150,8 @@ export async function buildContractDocx(d: ContractFormData): Promise<Uint8Array
     ],
   });
 
-  // Packer.toBuffer no browser retorna Uint8Array compatível
   const buf = await Packer.toBuffer(doc);
-  return new Uint8Array(buf as ArrayBuffer);
+  return new Uint8Array(buf as unknown as ArrayBufferLike);
 }
 
 function numberToWords(n: number): string {
