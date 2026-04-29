@@ -10,11 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TemplatesRouteImport } from './routes/templates'
+import { Route as GenerateRouteImport } from './routes/generate'
+import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as IndexRouteImport } from './routes/index'
 
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GenerateRoute = GenerateRouteImport.update({
+  id: '/generate',
+  path: '/generate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsRoute = ContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +37,35 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/generate': typeof GenerateRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/generate': typeof GenerateRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/generate': typeof GenerateRoute
   '/templates': typeof TemplatesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/templates'
+  fullPaths: '/' | '/contracts' | '/generate' | '/templates'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/templates'
-  id: '__root__' | '/' | '/templates'
+  to: '/' | '/contracts' | '/generate' | '/templates'
+  id: '__root__' | '/' | '/contracts' | '/generate' | '/templates'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContractsRoute: typeof ContractsRoute
+  GenerateRoute: typeof GenerateRoute
   TemplatesRoute: typeof TemplatesRoute
 }
 
@@ -56,6 +76,20 @@ declare module '@tanstack/react-router' {
       path: '/templates'
       fullPath: '/templates'
       preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/generate': {
+      id: '/generate'
+      path: '/generate'
+      fullPath: '/generate'
+      preLoaderRoute: typeof GenerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts': {
+      id: '/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof ContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +104,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContractsRoute: ContractsRoute,
+  GenerateRoute: GenerateRoute,
   TemplatesRoute: TemplatesRoute,
 }
 export const routeTree = rootRouteImport
