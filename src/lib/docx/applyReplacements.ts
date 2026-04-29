@@ -1,5 +1,5 @@
 import PizZip from "pizzip";
-import { base64ToUint8Array, arrayBufferToBase64 } from "./extractText";
+import { arrayBufferToBase64, base64ToUint8Array } from "./extractText";
 import type { Replacement } from "@/types";
 
 /**
