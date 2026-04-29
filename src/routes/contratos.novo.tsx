@@ -84,7 +84,8 @@ function NovoContratoPage() {
     formState: { errors },
     reset,
   } = useForm<FormValues>({
-    resolver: zodResolver(template.schema),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(template.schema as any) as any,
     defaultValues,
     mode: "onBlur",
   });
